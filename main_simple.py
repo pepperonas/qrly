@@ -204,7 +204,7 @@ class SimpleMainWindow(QMainWindow):
     def setup_ui(self):
         """Setup the UI"""
         self.setWindowTitle(f"QR Code 3D Generator v{__version__} (Simple Mode)")
-        self.setMinimumSize(600, 700)
+        self.setMinimumSize(600, 850)
 
         # Central widget
         central = QWidget()
