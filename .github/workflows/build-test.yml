@@ -1,0 +1,115 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }} - Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.13']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements*.txt', 'pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-gui.txt
+        pip install pytest pyinstaller
+
+    - name: Run tests
+      run: |
+        pytest tests/ -v
+
+    - name: Test imports
+      run: |
+        python -c "from __version__ import __version__; print(f'Version: {__version__}')"
+        python -c "import main_simple; print('GUI imports successful')"
+        python -c "from generate_qr_model import QRModelGenerator; print('Generator imports successful')"
+
+  build-check:
+    name: Build Check on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: test
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-gui.txt
+        pip install pyinstaller
+
+    - name: Build with PyInstaller (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        pyinstaller qr3d.spec --clean --noconfirm
+        ls -la dist/
+
+    - name: Build with PyInstaller (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        pyinstaller qr3d.spec --clean --noconfirm
+        ls -la dist/
+
+    - name: Build with PyInstaller (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        pyinstaller qr3d.spec --clean --noconfirm
+        dir dist\
+
+    - name: Verify build output (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        test -d dist/QR3DGenerator.app || exit 1
+        echo "macOS .app bundle created successfully"
+
+    - name: Verify build output (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        test -f dist/QR3DGenerator/QR3DGenerator || exit 1
+        echo "Linux executable created successfully"
+
+    - name: Verify build output (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        if (!(Test-Path "dist\QR3DGenerator\QR3DGenerator.exe")) { exit 1 }
+        Write-Host "Windows executable created successfully"
