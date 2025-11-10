@@ -13,6 +13,7 @@ Automatische Generierung von 3D-druckbaren QR-Code-Modellen aus URLs oder PNG/JP
   - Rechteck mit Text (54x64mm)
   - Pendant mit Text (55x65mm)
 - **Text-Funktion**: Optional erhabener Text (max. 12 Zeichen) unter dem QR-Code
+- **Dynamische Text-Größe**: Automatische Skalierung 3-6mm je nach Textlänge - passt immer perfekt!
 - **Text-Rotation**: 180° Drehung für bessere Lesbarkeit (automatisch bei Pendant+Text)
 - **Optimierte Größe**: QR-Code nutzt fast die gesamte Kartenfläche (minimaler Rand)
 - **Relief-QR-Code**: Erhabene schwarze Pixel (1mm)

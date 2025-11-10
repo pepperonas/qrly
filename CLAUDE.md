@@ -68,6 +68,8 @@ corner_radius = 2    # mm
 # Text mode parameters (NEW in 2025)
 text_content = ""    # Text to display under QR code
 text_size = 6        # Font size in mm (DYNAMIC: auto-scaled 3-6mm based on text length)
+                     # Dynamic calculation: char_width_factor=0.8, safety_buffer=4mm
+                     # Example: "berlinometer" (12 chars) → 4.79mm with qr_margin=2.0
 text_height = 1.0    # Relief height of text (same as QR)
 text_margin = 2      # Distance between QR code and text in mm
 text_rotation = 0    # Z-axis rotation (0 or 180 degrees)
@@ -222,6 +224,53 @@ module text_label() {
 ```bash
 --text-rotation {0,180}  # Default: 0, ignored for pendant-text (always 180)
 ```
+
+**Dynamic Text Sizing Feature (Added 2025-01-10):**
+
+**Problem:** Fixed 6mm text size caused overflow with longer text strings. Example: "berlinometer" (12 characters) extended beyond the model boundaries.
+
+**Solution:** Implemented dynamic text size calculation that auto-scales between 3-6mm based on:
+- Text length (character count)
+- Available width (card width minus margins and safety buffer)
+- Character width factor for Liberation Mono Bold font
+
+**Implementation Details:**
+
+1. **Character Width Factor: 0.8**
+   - Liberation Mono Bold character width ≈ 0.8 × font_size
+   - Started at 0.65 (too optimistic) → 0.7 (still slight overflow) → **0.8 (perfect fit)**
+   - Conservative estimate ensures text never overflows
+
+2. **Safety Buffer: 4mm**
+   - Initially 2mm → insufficient margin
+   - Increased to **4mm** for guaranteed fit
+   - Available width = card_width - (2 × qr_margin) - 4mm
+
+3. **Calculation Formula:**
+   ```python
+   available_width = card_width - (2 * qr_margin) - 4  # safety buffer
+   max_text_size = available_width / (len(text) * 0.8)  # char_width_factor
+   text_size = max(3.0, min(max_text_size, 6.0))  # constrain 3-6mm
+   ```
+
+4. **Examples (with qr_margin=2.0):**
+   - Rectangle-text: 46mm available (54mm - 4mm margins - 4mm buffer)
+   - Pendant-text: 47mm available (55mm - 4mm margins - 4mm buffer)
+   - "A" (1 char): 6.00mm (at maximum)
+   - "HELLO" (5 chars): 6.00mm (at maximum)
+   - "berlinometer" (12 chars): 4.79mm (auto-scaled down)
+
+**Why These Values Work:**
+- char_width_factor=0.8 is conservative enough to handle font rendering variations
+- 4mm safety buffer accounts for:
+  - OpenSCAD text rendering quirks
+  - Font edge cases and kerning
+  - Manufacturing tolerances in 3D printing
+- Result: Text guaranteed to fit within model boundaries for all 1-12 character strings
+
+**Code Location:**
+- `calculate_text_size()` method: generate_qr_model.py:121-152
+- Dynamic sizing call: generate_qr_model.py:154-169 in `calculate_dimensions()`
 
 ### 2. Performance Optimization: Pixel Sampling
 
