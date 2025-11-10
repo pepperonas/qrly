@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from generate_qr_model import QRModelGenerator
+from __version__ import __version__
 
 
 class GeneratorThread(QThread):
@@ -202,7 +203,7 @@ class SimpleMainWindow(QMainWindow):
 
     def setup_ui(self):
         """Setup the UI"""
-        self.setWindowTitle("QR Code 3D Generator (Simple Mode)")
+        self.setWindowTitle(f"QR Code 3D Generator v{__version__} (Simple Mode)")
         self.setMinimumSize(600, 700)
 
         # Central widget
