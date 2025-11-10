@@ -134,9 +134,9 @@ class QRModelGenerator:
         if not text or len(text) == 0:
             return 6  # Default size if no text
 
-        # Liberation Mono Bold: character width ≈ 0.7 * font_size
-        # Using 0.7 instead of exact 0.65 to ensure text always fits with safety margin
-        char_width_factor = 0.7
+        # Liberation Mono Bold: character width ≈ 0.8 * font_size
+        # Using 0.8 (increased from 0.75) to ensure text definitely fits with maximum safety margin
+        char_width_factor = 0.8
 
         # Calculate maximum text size that fits
         # text_width = len(text) * char_width_factor * text_size
@@ -163,7 +163,7 @@ class QRModelGenerator:
                 card_width_for_text = self.card_width  # 55mm
 
             # Calculate available width (card width minus margins and safety buffer)
-            available_text_width = card_width_for_text - (2 * self.qr_margin) - 2  # 2mm safety buffer
+            available_text_width = card_width_for_text - (2 * self.qr_margin) - 4  # 4mm safety buffer
 
             # Calculate and set dynamic text size
             self.text_size = self.calculate_text_size(self.text_content, available_text_width)
