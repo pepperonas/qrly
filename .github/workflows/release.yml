@@ -78,6 +78,10 @@ jobs:
         pip install -r requirements-gui.txt
         pip install pyinstaller
 
+    - name: Clean previous builds
+      run: |
+        rm -rf dist build
+
     - name: Build with PyInstaller
       run: |
         pyinstaller qr3d.spec --clean --noconfirm

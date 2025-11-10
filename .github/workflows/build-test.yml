@@ -95,6 +95,10 @@ jobs:
         pip install -r requirements-gui.txt
         pip install pyinstaller
 
+    - name: Clean previous builds
+      run: |
+        rm -rf dist build
+
     - name: Build with PyInstaller (macOS)
       if: runner.os == 'macOS'
       run: |
