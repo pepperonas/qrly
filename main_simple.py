@@ -15,7 +15,7 @@ sys.path.insert(0, str(project_root))
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QComboBox, QDoubleSpinBox,
-    QGroupBox, QFormLayout, QProgressBar, QFileDialog, QMessageBox, QCheckBox
+    QGroupBox, QFormLayout, QGridLayout, QProgressBar, QFileDialog, QMessageBox, QCheckBox
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from generate_qr_model import QRModelGenerator
@@ -281,41 +281,45 @@ class SimpleMainWindow(QMainWindow):
         mode_group.setLayout(mode_layout)
         layout.addWidget(mode_group)
 
-        # Parameters section
+        # Parameters section - 2x2 Grid Layout
         params_group = QGroupBox("Parameters")
-        params_layout = QFormLayout()
+        params_layout = QGridLayout()
 
-        # Height
+        # Row 1, Column 1: Card Height
+        params_layout.addWidget(QLabel("Card Height:"), 0, 0)
         self.height_spin = QDoubleSpinBox()
         self.height_spin.setRange(0.5, 5.0)
         self.height_spin.setValue(1.25)
         self.height_spin.setSingleStep(0.25)
         self.height_spin.setSuffix(" mm")
-        params_layout.addRow("Card Height:", self.height_spin)
+        params_layout.addWidget(self.height_spin, 0, 1)
 
-        # Margin
+        # Row 1, Column 2: QR Margin
+        params_layout.addWidget(QLabel("QR Margin:"), 0, 2)
         self.margin_spin = QDoubleSpinBox()
         self.margin_spin.setRange(0, 10)
         self.margin_spin.setValue(2.0)
         self.margin_spin.setSingleStep(0.25)
         self.margin_spin.setSuffix(" mm")
-        params_layout.addRow("QR Margin:", self.margin_spin)
+        params_layout.addWidget(self.margin_spin, 0, 3)
 
-        # Relief
+        # Row 2, Column 1: QR Relief
+        params_layout.addWidget(QLabel("QR Relief:"), 1, 0)
         self.relief_spin = QDoubleSpinBox()
         self.relief_spin.setRange(0.1, 2.0)
         self.relief_spin.setValue(1.0)
         self.relief_spin.setSingleStep(0.1)
         self.relief_spin.setSuffix(" mm")
-        params_layout.addRow("QR Relief:", self.relief_spin)
+        params_layout.addWidget(self.relief_spin, 1, 1)
 
-        # Corner radius
+        # Row 2, Column 2: Corner Radius
+        params_layout.addWidget(QLabel("Corner Radius:"), 1, 2)
         self.corner_spin = QDoubleSpinBox()
         self.corner_spin.setRange(0, 5)
         self.corner_spin.setValue(2)
         self.corner_spin.setSingleStep(0.5)
         self.corner_spin.setSuffix(" mm")
-        params_layout.addRow("Corner Radius:", self.corner_spin)
+        params_layout.addWidget(self.corner_spin, 1, 3)
 
         params_group.setLayout(params_layout)
         layout.addWidget(params_group)
