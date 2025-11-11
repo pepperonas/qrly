@@ -281,10 +281,10 @@ class SimpleMainWindow(QMainWindow):
 
         # Size presets
         size_preset_layout = QHBoxLayout()
-        size_preset_layout.addWidget(QLabel("Größe:"))
+        size_preset_layout.addWidget(QLabel("Size:"))
 
-        # Klein button
-        small_btn = QPushButton("Klein (0.5x)")
+        # Small button
+        small_btn = QPushButton("Small (0.5x)")
         small_btn.clicked.connect(lambda: self.set_size_scale(0.5))
         small_btn.setStyleSheet("""
             QPushButton {
@@ -300,8 +300,8 @@ class SimpleMainWindow(QMainWindow):
         """)
         size_preset_layout.addWidget(small_btn)
 
-        # Mittel button (default)
-        medium_btn = QPushButton("Mittel (1x)")
+        # Medium button (default)
+        medium_btn = QPushButton("Medium (1x)")
         medium_btn.clicked.connect(lambda: self.set_size_scale(1.0))
         medium_btn.setStyleSheet("""
             QPushButton {
@@ -318,8 +318,8 @@ class SimpleMainWindow(QMainWindow):
         """)
         size_preset_layout.addWidget(medium_btn)
 
-        # Groß button
-        large_btn = QPushButton("Groß (2x)")
+        # Large button
+        large_btn = QPushButton("Large (2x)")
         large_btn.clicked.connect(lambda: self.set_size_scale(2.0))
         large_btn.setStyleSheet("""
             QPushButton {
@@ -387,11 +387,11 @@ class SimpleMainWindow(QMainWindow):
         layout.addWidget(params_group)
 
         # Thickness presets
-        thickness_group = QGroupBox("Dicken-Presets")
+        thickness_group = QGroupBox("Thickness Presets")
         thickness_layout = QHBoxLayout()
 
-        # Dünn button (default)
-        thin_btn = QPushButton("Dünn (0.5mm)")
+        # Thin button (default)
+        thin_btn = QPushButton("Thin (0.5mm)")
         thin_btn.clicked.connect(lambda: self.set_thickness(0.5, 0.5))
         thin_btn.setStyleSheet("""
             QPushButton {
@@ -408,8 +408,8 @@ class SimpleMainWindow(QMainWindow):
         """)
         thickness_layout.addWidget(thin_btn)
 
-        # Mittel button
-        medium_btn = QPushButton("Mittel (1.0mm)")
+        # Medium button
+        medium_btn = QPushButton("Medium (1.0mm)")
         medium_btn.clicked.connect(lambda: self.set_thickness(1.0, 1.0))
         medium_btn.setStyleSheet("""
             QPushButton {
@@ -425,8 +425,8 @@ class SimpleMainWindow(QMainWindow):
         """)
         thickness_layout.addWidget(medium_btn)
 
-        # Dick button
-        thick_btn = QPushButton("Dick (1.5mm)")
+        # Thick button
+        thick_btn = QPushButton("Thick (1.5mm)")
         thick_btn.clicked.connect(lambda: self.set_thickness(1.5, 1.5))
         thick_btn.setStyleSheet("""
             QPushButton {
@@ -575,7 +575,7 @@ class SimpleMainWindow(QMainWindow):
         self.relief_spin.setValue(qr_relief)
 
     def set_size_scale(self, scale):
-        """Set the size scale factor (0.5 = klein, 1.0 = mittel, 2.0 = groß)"""
+        """Set the size scale factor (0.5 = small, 1.0 = medium, 2.0 = large)"""
         self.current_size_scale = scale
         self.update_size_label()
 
@@ -588,19 +588,19 @@ class SimpleMainWindow(QMainWindow):
         if mode_index == 0:  # Square
             width = 55 * scale
             length = 55 * scale
-            size_text = f"Größe: {width:.1f} x {length:.1f} mm"
+            size_text = f"Size: {width:.1f} x {length:.1f} mm"
         elif mode_index == 1:  # Pendant
             width = 55 * scale
             length = 61 * scale  # 55 + 6mm for hole area
-            size_text = f"Größe: {width:.1f} x {length:.1f} mm"
+            size_text = f"Size: {width:.1f} x {length:.1f} mm"
         elif mode_index == 2:  # Rectangle + Text
             width = 54 * scale
             length = 64 * scale
-            size_text = f"Größe: {width:.1f} x {length:.1f} mm"
+            size_text = f"Size: {width:.1f} x {length:.1f} mm"
         elif mode_index == 3:  # Pendant + Text
             width = 55 * scale
             length = 65 * scale  # Approximate
-            size_text = f"Größe: {width:.1f} x {length:.1f} mm"
+            size_text = f"Size: {width:.1f} x {length:.1f} mm"
         else:
             size_text = ""
 
@@ -713,52 +713,52 @@ class SimpleMainWindow(QMainWindow):
         """Show help dialog with usage tips"""
         help_text = """<h2>QR Code 3D Model Generator</h2>
 
-<p>Dieses Tool generiert 3D-druckbare QR-Code-Modelle aus URLs oder Bildern.</p>
+<p>This tool generates 3D-printable QR code models from URLs or images.</p>
 
-<h3>Eingabe:</h3>
+<h3>Input:</h3>
 <ul>
-<li><b>URL eingeben:</b> QR-Code wird automatisch generiert</li>
-<li><b>Oder Bilddatei auswählen:</b> PNG/JPG Dateien werden unterstützt</li>
+<li><b>Enter URL:</b> QR code is generated automatically</li>
+<li><b>Or select image file:</b> PNG/JPG files are supported</li>
 </ul>
 
 <h3>Model Type:</h3>
 <ul>
-<li><b>Square:</b> Quadratisches Modell</li>
-<li><b>Pendant (with hole):</b> Mit Loch für Schlüsselanhänger</li>
-<li><b>Rectangle + Text:</b> Rechteckig mit Textfeld</li>
-<li><b>Pendant + Text:</b> Mit Loch und Textfeld</li>
+<li><b>Square:</b> Square model (55x55mm)</li>
+<li><b>Pendant (with hole):</b> With hole for keychain</li>
+<li><b>Rectangle + Text:</b> Rectangular with text field</li>
+<li><b>Pendant + Text:</b> With hole and text field</li>
 </ul>
 
-<h3>Größe:</h3>
+<h3>Size:</h3>
 <ul>
-<li><b>Klein (0.5x):</b> Halbe Größe - spart Material</li>
-<li><b>Mittel (1x):</b> Standard-Größe (empfohlen)</li>
-<li><b>Groß (2x):</b> Doppelte Größe - bessere Scannbarkeit</li>
+<li><b>Small (0.5x):</b> Half size - saves material</li>
+<li><b>Medium (1x):</b> Standard size (recommended)</li>
+<li><b>Large (2x):</b> Double size - better scannability</li>
 </ul>
-<p><i>Aktuelle Dimensionen werden unter dem Model Type angezeigt.</i></p>
+<p><i>Current dimensions are displayed below Model Type.</i></p>
 
-<h3>Dicken-Presets:</h3>
+<h3>Thickness Presets:</h3>
 <ul>
-<li><b>Dünn (0.5mm):</b> Schneller Druck, weniger Material</li>
-<li><b>Mittel (1.0mm):</b> Ausgewogen</li>
-<li><b>Dick (1.5mm):</b> Stabiler, besser lesbar</li>
+<li><b>Thin (0.5mm):</b> Faster printing, less material</li>
+<li><b>Medium (1.0mm):</b> Balanced</li>
+<li><b>Thick (1.5mm):</b> More stable, better readability</li>
 </ul>
 
-<h3>Ausgabe:</h3>
-<p>Generierte Dateien werden im <b>'generated'</b> Ordner gespeichert:</p>
+<h3>Output:</h3>
+<p>Generated files are saved in the <b>'generated'</b> folder:</p>
 <ul>
-<li>.stl Datei für 3D-Druck</li>
-<li>.scad Datei (OpenSCAD Quellcode)</li>
-<li>.json Datei (Metadaten)</li>
-<li>.png Datei (QR-Code, falls von URL generiert)</li>
+<li>.stl file for 3D printing</li>
+<li>.scad file (OpenSCAD source code)</li>
+<li>.json file (metadata)</li>
+<li>.png file (QR code, if generated from URL)</li>
 </ul>
 
 <h3>Performance:</h3>
-<p>Mit OpenSCAD 2025+ dauert die Generierung nur ~1 Sekunde!</p>
+<p>With OpenSCAD 2025+ generation takes only ~1 second!</p>
 """
 
         msg = QMessageBox(self)
-        msg.setWindowTitle("Hilfe - QR Code 3D Generator")
+        msg.setWindowTitle("Help - QR Code 3D Generator")
         msg.setTextFormat(Qt.TextFormat.RichText)
         msg.setText(help_text)
         msg.setIcon(QMessageBox.Icon.Information)

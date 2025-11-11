@@ -1,6 +1,6 @@
 # QR Code 3D Model Generator
 
-Automatische Generierung von 3D-druckbaren QR-Code-Modellen aus URLs oder PNG/JPG-Bildern - mit Desktop-GUI oder Kommandozeile.
+Automatically generate 3D-printable QR code models from URLs or PNG/JPG images - with desktop GUI or command line.
 
 ![QR Code 3D Generator GUI](docs/images/screenshot-v0.0.1.png)
 
@@ -8,135 +8,147 @@ Automatische Generierung von 3D-druckbaren QR-Code-Modellen aus URLs oder PNG/JP
 
 ## Features
 
-- **Desktop GUI**: Benutzerfreundliche Anwendung mit Echtzeit-Vorschau der Parameter
-- **Batch-Verarbeitung**: Mehrere Modelle automatisch generieren via JSON-Konfiguration
-- **URL-Support**: QR-Codes direkt aus URLs generieren
-- **Vier Modi**:
-  - Quadratisch (55x55mm)
-  - Pendant mit Anhänger-Loch (55x61mm)
-  - Rechteck mit Text (54x64mm)
-  - Pendant mit Text (55x65mm)
-- **Text-Funktion**: Optional erhabener Text (max. 20 Zeichen) unter dem QR-Code
-- **Dynamische Text-Größe**: Automatische Skalierung 3-6mm je nach Textlänge - passt immer perfekt!
-- **Text-Rotation**: 180° Drehung für bessere Lesbarkeit (automatisch bei Pendant+Text)
-- **Optimierte Größe**: QR-Code nutzt fast die gesamte Kartenfläche (minimaler Rand)
-- **Relief-QR-Code**: Erhabene schwarze Pixel (1mm)
-- **Abgerundete Ecken**: 2mm Radius für professionelles Design
-- **Blitzschnelle Performance**: ~1 Sekunde pro Modell mit OpenSCAD 2025+ (126x schneller als ältere Versionen!)
-- **Automatische STL-Generierung**: Direkt druckfertig
-- **JSON-Metadata-Export**: Jedes Modell erhält eine JSON-Datei mit vollständiger Konfiguration
-- **Organisierte Ausgabe**: Jedes Modell in eigenem Unterordner mit allen Dateien (PNG, SCAD, STL, JSON)
+- **Desktop GUI**: User-friendly application with real-time parameter preview
+- **Batch Processing**: Automatically generate multiple models via JSON configuration
+- **URL Support**: Generate QR codes directly from URLs
+- **Four Modes**:
+  - Square (55x55mm)
+  - Pendant with keychain hole (55x61mm)
+  - Rectangle with text (54x64mm)
+  - Pendant with text (55x65mm)
+- **Text Function**: Optional embossed text (max. 20 characters) below QR code
+- **Dynamic Text Sizing**: Automatic scaling 3-6mm based on text length - always fits perfectly!
+- **Text Rotation**: 180° rotation for better readability (automatic for Pendant+Text)
+- **Optimized Size**: QR code uses almost the entire card surface (minimal margin)
+- **Relief QR Code**: Embossed black pixels (1mm)
+- **Rounded Corners**: 2mm radius for professional design
+- **Lightning-Fast Performance**: ~1 second per model with OpenSCAD 2025+ (126x faster than older versions!)
+- **Size Presets**: Quick selection of Small (0.5x), Medium (1x), or Large (2x) model dimensions
+- **Thickness Presets**: One-click thickness adjustment - Thin (0.5mm), Medium (1.0mm), or Thick (1.5mm)
+- **Automatic STL Generation**: Print-ready output
+- **JSON Metadata Export**: Each model gets a JSON file with complete configuration
+- **Organized Output**: Each model in its own subfolder with all files (PNG, SCAD, STL, JSON)
 
-### 🌟 Intelligente Text-Skalierung
+### 🌟 Intelligent Text Scaling
 
-Der Generator verwendet eine **intelligente dynamische Text-Skalierung**, die automatisch die optimale Schriftgröße berechnet:
+The generator uses **intelligent dynamic text scaling** that automatically calculates the optimal font size:
 
-- **Kurze Texte** (1-7 Zeichen): Maximale Größe von 6mm für optimale Lesbarkeit
-- **Mittlere Texte** (8-14 Zeichen): Automatisch skaliert zwischen 4-5mm
-- **Lange Texte** (15-20 Zeichen): Skaliert auf minimum 3mm, passt perfekt!
+- **Short Text** (1-7 characters): Maximum size of 6mm for optimal readability
+- **Medium Text** (8-14 characters): Automatically scaled between 4-5mm
+- **Long Text** (15-20 characters): Scaled to minimum 3mm, fits perfectly!
 
-**Beispiele:**
-- "LOGO" → 6.00mm (groß und gut lesbar)
-- "berlinometer" → 4.79mm (ausgeglichen)
-- "berlinometer.de" → 3.83mm (kompakt, passt perfekt)
-- 20 Zeichen → 3.06mm (kleiner, aber lesbar)
+**Examples:**
+- "LOGO" → 6.00mm (large and readable)
+- "berlinometer" → 4.79mm (balanced)
+- "berlinometer.de" → 3.83mm (compact, fits perfectly)
+- 20 characters → 3.06mm (smaller but readable)
 
-**Technischer Hintergrund:**
-Die Berechnung berücksichtigt die Kartengröße, QR-Margins und einen 4mm Sicherheitspuffer. Mit den Standard-Einstellungen (qr_margin=0.5mm) passen alle Texte von 1-20 Zeichen **garantiert** innerhalb der Modellgrenzen - kein Überlauf, keine manuellen Anpassungen nötig!
+**Technical Background:**
+The calculation considers card size, QR margins, and a 4mm safety buffer. With default settings (qr_margin=0.5mm), all texts from 1-20 characters are **guaranteed** to fit within model boundaries - no overflow, no manual adjustments needed!
 
-## Schnellstart
+## Quick Start
 
-### 1. Installation (einmalig)
+### 1. Installation (one-time)
 
 ```bash
-# OpenSCAD installieren (für STL-Export)
+# Install OpenSCAD (for STL export)
 brew install openscad
 
-# Python-Package installieren (editable mode)
+# Install Python package (editable mode)
 pip install -e .
 
-# Alternativ: Virtual Environment nutzen
-# Python 3.13 Virtual Environment in venv-gui/
+# Alternative: Use virtual environment
+# Python 3.13 virtual environment in venv-gui/
 # ./venv-gui/bin/pip install -e .
 ```
 
-### 2. GUI-Anwendung starten (empfohlen)
+### 2. Start GUI Application (recommended)
 
 ```bash
-# Nach Installation mit pip:
+# After pip installation:
 qr3d-gui
 
-# Oder mit Virtual Environment:
+# Or with virtual environment:
 ./venv-gui/bin/python -m qr3d.app
 ```
 
-**GUI-Features:**
-- URL oder Bilddatei eingeben
-- Modus wählen (Square/Pendant/Rectangle+Text/Pendant+Text)
-- Optional: Text eingeben (max. 20 Zeichen)
-- Parameter anpassen (Höhe, Margin, Relief, Eckenradius)
-- "Generate 3D Model" klicken
-- Fortschritt in Echtzeit verfolgen
-- Dateien werden automatisch in `generated/` gespeichert
+**GUI Features:**
+- Enter URL or select image file
+- Choose mode (Square/Pendant/Rectangle+Text/Pendant+Text)
+- Optional: Enter text (max 20 characters)
+- Adjust parameters (height, margin, relief, corner radius)
+- Select size preset: Small (0.5x), Medium (1x), or Large (2x)
+- Select thickness preset: Thin (0.5mm), Medium (1.0mm), or Thick (1.5mm)
+- Click "Generate 3D Model"
+- Track progress in real-time
+- Files automatically saved to `generated/`
 
-### 3. Kommandozeile (Alternative)
+### 3. Command Line (Alternative)
 
-#### Von URL (einfachster Weg):
+#### From URL (easiest way):
 
 ```bash
-# Mit Shell-Script:
-./scripts/qr_generate.sh https://ihre-website.de --mode pendant --name meine-site
+# With shell script:
+./scripts/qr_generate.sh https://your-website.com --mode pendant --name my-site
 
-# Oder direkt mit Python (nach pip install -e .):
-qr3d https://ihre-website.de --mode pendant --name meine-site
+# Or directly with Python (after pip install -e .):
+qr3d https://your-website.com --mode pendant --name my-site
 ```
 
-#### Von Bilddatei:
+#### From Image File:
 
 ```bash
 ./scripts/qr_generate.sh myqr.png --mode square
 ```
 
-## Verwendung
+## Usage
 
-### GUI-Anwendung
+### GUI Application
 
 **Start:**
 ```bash
 ./venv-gui/bin/python -m qr3d.app
 ```
 
-**Bedienung:**
-1. **Input**: URL eingeben (z.B. `https://example.com`) oder PNG/JPG-Datei auswählen
-2. **Output Name**: Optional - wird automatisch von URL abgeleitet
-3. **Model Type**: Wähle aus 4 Modi:
-   - Square (55x55mm) - Klassisch quadratisch
-   - Pendant (with hole) - Mit Anhänger-Loch
-   - Rectangle + Text (54x64mm) - Rechteck mit Textfeld
-   - Pendant + Text (55x65mm) - Anhänger mit Textfeld
-4. **Text**: Bei Text-Modi: Text eingeben (max. 20 Zeichen)
-5. **Text-Rotation** (nur bei Rectangle+Text): Optional "Rotate text 180°" aktivieren für umgedrehten Text
-   - Bei Pendant+Text wird der Text automatisch um 180° gedreht
-6. **Parameter anpassen**:
-   - Card Height: 0.5-5mm (Standard: 1.25mm)
-   - QR Margin: 0-10mm (Standard: 0.5mm)
-   - QR Relief: 0.1-2mm (Standard: 1mm)
-   - Corner Radius: 0-5mm (Standard: 2mm)
-7. **Generate 3D Model** klicken
-8. Warten (~1-2 Minuten)
-9. ✅ Erfolg! Dateien in `generated/model-name/` Ordner
+**Operation:**
+1. **Input**: Enter URL (e.g., `https://example.com`) or select PNG/JPG file
+2. **Output Name**: Optional - automatically derived from URL
+3. **Model Type**: Choose from 4 modes:
+   - Square (55x55mm) - Classic square
+   - Pendant (with hole) - With keychain hole
+   - Rectangle + Text (54x64mm) - Rectangle with text field
+   - Pendant + Text (55x65mm) - Pendant with text field
+4. **Size**: Select preset button:
+   - Small (0.5x) - Half size, saves material
+   - Medium (1x) - Standard size (recommended)
+   - Large (2x) - Double size, better scannability
+5. **Text**: For text modes: Enter text (max 20 characters)
+6. **Text Rotation** (Rectangle+Text only): Optional "Rotate text 180°" checkbox for upside-down text
+   - Pendant+Text automatically rotates text 180°
+7. **Adjust parameters**:
+   - Card Height: 0.5-5mm (default: 1.25mm)
+   - QR Margin: 0-10mm (default: 0.5mm)
+   - QR Relief: 0.1-2mm (default: 1mm)
+   - Corner Radius: 0-5mm (default: 2mm)
+8. **Thickness Presets**: Quick selection:
+   - Thin (0.5mm) - Faster printing, less material
+   - Medium (1.0mm) - Balanced
+   - Thick (1.5mm) - More stable, better readability
+9. **Click "Generate 3D Model"**
+10. Wait (~1 second with OpenSCAD 2025+)
+11. ✅ Success! Files in `generated/model-name/` folder
 
-### Ausgabe-Organisation
+### Output Organization
 
-Jedes generierte Modell erhält einen eigenen Unterordner in `generated/`:
+Each generated model gets its own subfolder in `generated/`:
 
 ```
 generated/
-├── meine-site/
-│   ├── meine-site.png          # QR-Code Bild
-│   ├── meine-site.json         # Konfigurations-Metadaten
-│   ├── meine-site.scad         # OpenSCAD Quellcode
-│   └── meine-site.stl          # 3D-Modell (druckfertig)
+├── my-site/
+│   ├── my-site.png          # QR code image
+│   ├── my-site.json         # Configuration metadata
+│   ├── my-site.scad         # OpenSCAD source code
+│   └── my-site.stl          # 3D model (print-ready)
 └── github-pendant/
     ├── github-pendant.png
     ├── github-pendant.json
@@ -144,30 +156,30 @@ generated/
     └── github-pendant.stl
 ```
 
-**JSON-Metadaten** enthalten:
-- Zeitstempel und Version
-- Verwendeter Modus (square/pendant/rectangle-text/pendant-text)
-- QR-Eingabe (URL oder Dateiname)
-- Alle Dimensionen (Kartengröße, QR-Größe, Pixelgröße, Grid)
-- Alle Parameter (Margins, Relief, Eckenradius)
-- Modus-spezifische Daten (z.B. Loch-Durchmesser bei Pendant)
-- Text-Daten (Inhalt, Größe, Rotation bei Text-Modi)
+**JSON Metadata** contains:
+- Timestamp and version
+- Used mode (square/pendant/rectangle-text/pendant-text)
+- QR input (URL or filename)
+- All dimensions (card size, QR size, pixel size, grid)
+- All parameters (margins, relief, corner radius)
+- Mode-specific data (e.g., hole diameter for pendant)
+- Text data (content, size, rotation for text modes)
 
-**Vorteil:** Einfache Reproduktion mit exakt denselben Einstellungen!
+**Advantage:** Easy reproduction with exactly the same settings!
 
-### Batch-Verarbeitung (GUI)
+### Batch Processing (GUI)
 
-Für die Generierung mehrerer Modelle auf einmal steht eine Batch-Funktion zur Verfügung:
+For generating multiple models at once, batch functionality is available:
 
-**Erstmalige Verwendung:**
-1. GUI starten: `./venv-gui/bin/python -m qr3d.app`
-2. Im Bereich "Batch Processing" auf "Create Config Template" klicken
-3. Datei `batch/config.json` wird erstellt mit Beispiel-Konfiguration
-4. `batch/config.json` nach Wunsch anpassen (siehe unten)
-5. Auf "Start Batch (X models)" klicken
-6. Warten bis alle Modelle generiert sind
+**First-time use:**
+1. Start GUI: `./venv-gui/bin/python -m qr3d.app`
+2. In "Batch Processing" section, click "Create Config Template"
+3. File `batch/config.json` is created with example configuration
+4. Customize `batch/config.json` as desired (see below)
+5. Click "Start Batch (X models)"
+6. Wait until all models are generated
 
-**Config-Struktur (`batch/config.json`):**
+**Config Structure (`batch/config.json`):**
 ```json
 {
   "global_params": {
@@ -205,345 +217,355 @@ Für die Generierung mehrerer Modelle auf einmal steht eine Batch-Funktion zur V
 }
 ```
 
-**Wichtige Hinweise:**
-- **global_params**: Standard-Parameter für alle Modelle
-- **models**: Array mit einzelnen Modell-Konfigurationen
-- Pflichtfelder pro Modell: `name`, `url`, `mode`
-- Optional: `text`, `text_rotation` (für Text-Modi)
-- Optional: Individuelle Parameter (überschreiben global_params)
-- Status-Label aktualisiert sich automatisch alle 5 Sekunden
-- Fortschritt wird in Echtzeit angezeigt (X/Y Modelle)
-- Fehlgeschlagene Modelle werden übersprungen, nicht abgebrochen
+**Important Notes:**
+- **global_params**: Default parameters for all models
+- **models**: Array with individual model configurations
+- Required fields per model: `name`, `url`, `mode`
+- Optional: `text`, `text_rotation` (for text modes)
+- Optional: Individual parameters (override global_params)
+- Status label updates automatically every 5 seconds
+- Progress shown in real-time (X/Y models)
+- Failed models are skipped, not aborted
 
-### Kommandozeile
+### Command Line
 
-#### Von URL:
+#### From URL:
 
-**Basis:**
+**Basic:**
 ```bash
 ./scripts/qr_generate.sh https://example.com
 ```
 
-**Mit Optionen:**
+**With Options:**
 ```bash
 ./scripts/qr_generate.sh https://github.com/user/repo --name github --mode pendant
 ```
 
-**Website mit Parametern:**
+**Website with Parameters:**
 ```bash
 ./scripts/qr_generate.sh "https://example.com/profile?user=123" --name profile
 ```
 
-**Mit Text (Rectangle+Text):**
+**With Text (Rectangle+Text):**
 ```bash
 ./scripts/qr_generate.sh https://example.com --mode rectangle-text --text "AIMPLICITY" --name mycard
 ```
 
-**Mit Text (Pendant+Text):**
+**With Text (Pendant+Text):**
 ```bash
 ./scripts/qr_generate.sh https://github.com/user --mode pendant-text --text "GitHub" --name github
 ```
 
-**Mit rotiertem Text (Rectangle+Text):**
+**With Rotated Text (Rectangle+Text):**
 ```bash
 ./venv-gui/bin/python -m qr3d https://example.com --mode rectangle-text --text "ROTATED" --text-rotation 180 --name mycard-rot
 ```
 
-#### Von Bilddatei:
+#### From Image File:
 
-**Quadratisch:**
+**Square:**
 ```bash
 ./scripts/qr_generate.sh myqr.png
 ```
 
-**Anhänger:**
+**Pendant:**
 ```bash
 ./scripts/qr_generate.sh celox.png --mode pendant
 ```
 
-**Mit Custom Output:**
+**With Custom Output:**
 ```bash
 ./scripts/qr_generate.sh qrcode.jpg --mode square --output ./stl_files
 ```
 
-### Parameter
+### Parameters
 
-| Parameter | Beschreibung | Standard |
-|-----------|-------------|----------|
-| `input` | QR-Code-Bilddatei (PNG/JPG) oder URL | *erforderlich* |
-| `--mode` | Modus: `square`, `pendant`, `rectangle-text`, `pendant-text` | `square` |
-| `--text`, `-t` | Text unter QR-Code (max. 20 Zeichen, nur für *-text Modi) | *(leer)* |
-| `--text-rotation` | Text um 180° drehen (0 oder 180, auto bei pendant-text) | `0` |
-| `--output`, `-o` | Output-Verzeichnis | `generated` |
-| `--name`, `-n` | Basisname für Ausgabedateien | *abgeleitet von Input* |
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `input` | QR code image file (PNG/JPG) or URL | *required* |
+| `--mode` | Mode: `square`, `pendant`, `rectangle-text`, `pendant-text` | `square` |
+| `--text`, `-t` | Text below QR code (max 20 characters, only for *-text modes) | *(empty)* |
+| `--text-rotation` | Rotate text 180° (0 or 180, auto for pendant-text) | `0` |
+| `--output`, `-o` | Output directory | `generated` |
+| `--name`, `-n` | Base name for output files | *derived from input* |
 
-## Modi im Detail
+## Modes in Detail
 
-### Square Mode (Quadratisch)
-- **Abmessungen**: 55 x 55 x 1.25 mm
-- **Ränder**: 0.5mm rundum (Standard)
-- **QR-Code-Bereich**: ~54 x 54 mm
-- **QR-Relief**: 1mm erhaben
-- **Verwendung**: Visitenkarten, Etiketten, Einleger
+### Square Mode
+
+- **Dimensions**: 55 x 55 x 1.25 mm
+- **Margins**: 0.5mm all around (default)
+- **QR Code Area**: ~54 x 54 mm
+- **QR Relief**: 1mm embossed
+- **Use Cases**: Business cards, labels, inserts
 
 ```
 ┌─────────────────┐
 │    0.5mm        │
 │  ┌─────────┐    │
-│.5│ QR-Code │.5  │
+│.5│ QR Code │.5  │
 │  └─────────┘    │
 │    0.5mm        │
 └─────────────────┘
 ```
 
-### Pendant Mode (Anhänger)
-- **Abmessungen**: 55 x 61 x 1.25 mm
-- **Ränder**: 0.5mm (Seiten/unten), 8mm (oben für Loch)
-- **Loch**: ⌀5mm, 6mm vom oberen Rand
-- **QR-Code-Bereich**: ~54 x 54 mm
-- **QR-Relief**: 1mm erhaben
-- **Verwendung**: Schlüsselanhänger, Halsketten, Gepäckanhänger
+### Pendant Mode
+
+- **Dimensions**: 55 x 61 x 1.25 mm
+- **Margins**: 0.5mm (sides/bottom), 8mm (top for hole)
+- **Hole**: ⌀5mm, 6mm from top edge
+- **QR Code Area**: ~54 x 54 mm
+- **QR Relief**: 1mm embossed
+- **Use Cases**: Keychains, necklaces, luggage tags
 
 ```
 ┌─────────────────┐
-│     6mm    ●    │ ← Loch (⌀5mm)
+│     6mm    ●    │ ← Hole (⌀5mm)
 │     2mm         │
 │  ┌─────────┐    │
-│.5│ QR-Code │.5  │
+│.5│ QR Code │.5  │
 │  └─────────┘    │
 │    0.5mm        │
 └─────────────────┘
 ```
 
-### Rectangle + Text Mode (Rechteck mit Text)
-- **Abmessungen**: 54 x 64 x 1.25 mm
-- **Ränder**: 0.5mm rundum
-- **QR-Code-Bereich**: ~53 x 53 mm
-- **QR-Relief**: 1mm erhaben
-- **Text**: Erhaben (1mm), dynamisch 3-6mm hoch (automatisch skaliert), max. 20 Zeichen
-- **Text-Abstand**: 2mm unter QR-Code
+### Rectangle + Text Mode
+
+- **Dimensions**: 54 x 64 x 1.25 mm
+- **Margins**: 0.5mm all around
+- **QR Code Area**: ~53 x 53 mm
+- **QR Relief**: 1mm embossed
+- **Text**: Embossed (1mm), dynamic 3-6mm height (auto-scaled), max 20 characters
+- **Text Spacing**: 2mm below QR code
 - **Font**: Liberation Mono Bold (Monospace)
-- **Verwendung**: Visitenkarten, beschriftete Etiketten, personalisierte Karten
+- **Use Cases**: Business cards, labeled tags, personalized cards
 
 ```
 ┌─────────────────┐
 │    0.5mm        │
 │  ┌─────────┐    │
-│.5│ QR-Code │.5  │
+│.5│ QR Code │.5  │
 │  └─────────┘    │
 │   2mm           │
-│   TEXT HERE     │ ← Erhaben 1mm
+│   TEXT HERE     │ ← Embossed 1mm
 │    0.5mm        │
 └─────────────────┘
      64mm
 ```
 
-### Pendant + Text Mode (Anhänger mit Text)
-- **Abmessungen**: 55 x ~65 x 1.25 mm (Länge variiert mit Text)
-- **Ränder**: 0.5mm (Seiten/unten), 8mm (oben für Loch)
-- **Loch**: ⌀5mm, 6mm vom oberen Rand
-- **QR-Code-Bereich**: ~54 x 54 mm
-- **QR-Relief**: 1mm erhaben
-- **Text**: Erhaben (1mm), dynamisch 3-6mm hoch (automatisch skaliert), max. 20 Zeichen
-- **Text-Abstand**: 2mm unter QR-Code
+### Pendant + Text Mode
+
+- **Dimensions**: 55 x ~65 x 1.25 mm (length varies with text)
+- **Margins**: 0.5mm (sides/bottom), 8mm (top for hole)
+- **Hole**: ⌀5mm, 6mm from top edge
+- **QR Code Area**: ~54 x 54 mm
+- **QR Relief**: 1mm embossed
+- **Text**: Embossed (1mm), dynamic 3-6mm height (auto-scaled), max 20 characters
+- **Text Spacing**: 2mm below QR code
 - **Font**: Liberation Mono Bold (Monospace)
-- **Verwendung**: Personalisierte Schlüsselanhänger, beschriftete Gepäckanhänger
+- **Use Cases**: Personalized keychains, labeled luggage tags
 
 ```
 ┌─────────────────┐
-│     6mm    ●    │ ← Loch (⌀5mm)
+│     6mm    ●    │ ← Hole (⌀5mm)
 │     2mm         │
 │  ┌─────────┐    │
-│.5│ QR-Code │.5  │
+│.5│ QR Code │.5  │
 │  └─────────┘    │
 │   2mm           │
-│   TEXT HERE     │ ← Erhaben 1mm
+│   TEXT HERE     │ ← Embossed 1mm
 │    0.5mm        │
 └─────────────────┘
     ~65mm
 ```
 
-## Design-Spezifikationen
+## Design Specifications
 
-| Eigenschaft | Wert |
-|-------------|------|
-| Kartenbreite | 55mm (ISO 7810) bzw. 54mm (Rectangle-Text) |
-| Kartenhöhe | 1.25mm |
-| QR-Code-Relief | 1mm erhaben |
-| Eckenradius | 2mm |
-| Randbreite | **0.5mm** (Standard, anpassbar 0-10mm) |
-| QR-Code Border | **1 Modul** (minimal für maximale Fläche) |
-| Oberer Rand (Pendant) | 8mm |
-| Lochdurchmesser | 5mm |
-| Loch-Position | 6mm vom oberen Rand, horizontal zentriert |
-| **Text-Größe** | **3-6mm** (dynamisch skaliert je nach Textlänge) |
-| **Text-Relief** | **1mm** (gleich wie QR-Code) |
-| **Text-Abstand** | **2mm** (Abstand zum QR-Code) |
-| **Text-Font** | **Liberation Mono Bold** (Monospace) |
-| **Text-Rotation** | **0° oder 180°** (Rectangle: wählbar, Pendant: automatisch 180°) |
+| Property | Value |
+|----------|-------|
+| Card Width | 55mm (ISO 7810) or 54mm (Rectangle-Text) |
+| Card Height | 1.25mm (adjustable via thickness presets) |
+| QR Code Relief | 1mm embossed |
+| Corner Radius | 2mm |
+| Margin Width | **0.5mm** (default, adjustable 0-10mm) |
+| QR Code Border | **1 module** (minimal for maximum area) |
+| Top Margin (Pendant) | 8mm |
+| Hole Diameter | 5mm |
+| Hole Position | 6mm from top edge, horizontally centered |
+| **Text Size** | **3-6mm** (dynamically scaled based on text length) |
+| **Text Relief** | **1mm** (same as QR code) |
+| **Text Spacing** | **2mm** (distance to QR code) |
+| **Text Font** | **Liberation Mono Bold** (Monospace) |
+| **Text Rotation** | **0° or 180°** (Rectangle: selectable, Pendant: automatic 180°) |
 
-## Ausgabedateien
+## Output Files
 
-Alle generierten Dateien werden automatisch im Ordner **`generated/`** abgelegt.
+All generated files are automatically placed in the **`generated/`** folder.
 
-Für Input `https://example.com` mit `--name example` werden erstellt:
+For input `https://example.com` with `--name example`:
 
-- **`generated/example.png`**: QR-Code-Bild (bei URL-Input)
-- **`generated/example-model.scad`**: OpenSCAD-Quelldatei (editierbar, parametrisch)
-- **`generated/example-model.stl`**: 3D-Druckdatei (direkt druckbar)
+- **`generated/example.png`**: QR code image (for URL input)
+- **`generated/example-model.scad`**: OpenSCAD source file (editable, parametric)
+- **`generated/example-model.stl`**: 3D print file (directly printable)
 
 ## Performance
 
-### Generierungszeit
+### Generation Time
 
-Das System nutzt intelligentes **Pixel-Sampling** für optimale Performance:
+The system uses intelligent **pixel sampling** for optimal performance:
 
-| Phase | Zeit | Beschreibung |
-|-------|------|--------------|
-| QR-Code-Generierung | < 1 Sek | PNG aus URL oder Bild laden |
-| OpenSCAD-Datei | < 1 Sek | .scad Code generieren |
-| STL-Rendering | **~1-2 Min** | OpenSCAD kompiliert zu STL |
-| **Gesamt** | **~1:30 Minuten** | Pro Modell |
+| Phase | Time | Description |
+|-------|------|-------------|
+| QR Code Generation | < 1 sec | PNG from URL or load image |
+| OpenSCAD File | < 1 sec | Generate .scad code |
+| STL Rendering (2025+) | **~1 sec** | OpenSCAD compiles to STL |
+| STL Rendering (older) | ~1-2 min | Older OpenSCAD versions |
+| **Total (2025+)** | **~2-3 seconds** | Per model with OpenSCAD 2025+ |
+| **Total (older)** | **~1:30 minutes** | Per model with older OpenSCAD |
 
-### Optimierungen
+### Optimizations
 
-**1. Pixel-Sampling**
-- Original QR: 100x100 Pixel → ~10.000 3D-Würfel → 2-5 Min
-- Optimiert: 50x50 Grid → ~800-1.200 Würfel → **1-2 Min** ✅
-- **10-30x schneller** ohne Qualitätsverlust!
+**1. Pixel Sampling**
+- Original QR: 100x100 pixels → ~10,000 3D cubes → 2-5 min
+- Optimized: 50x50 grid → ~800-1,200 cubes → **1-2 min** ✅
+- **10-30x faster** without quality loss!
 
-**2. Minimaler QR-Border**
-- Standard: 4 Module Rand (QR-Spec)
-- Optimiert: **1 Modul** Rand ✅
-- Resultat: QR-Code nutzt ~54x54mm statt ~51x51mm
+**2. Minimal QR Border**
+- Standard: 4 modules border (QR spec)
+- Optimized: **1 module** border ✅
+- Result: QR code uses ~54x54mm instead of ~51x51mm
 
-**3. Angepasster OpenSCAD $fn-Wert**
-- Reduziert auf 12 für schnelleres Rendering
-- Ausreichend für abgerundete Ecken
+**3. Adjusted OpenSCAD $fn Value**
+- Reduced to 12 for faster rendering
+- Sufficient for rounded corners
 
-#### Warum funktioniert das?
+#### Why does this work?
 
-- **Error Correction Level H**: 30% Fehlertoleranz
-- **3D-Druck-Auflösung**: Feinere Details nicht sichtbar
-- **Physischer Rand**: 0.5mm Kartenmarge ersetzt QR-Border
-- **Resultat**: Schneller, größer, genauso scanbar!
+- **Error Correction Level H**: 30% error tolerance
+- **3D Print Resolution**: Finer details not visible anyway
+- **Physical Margin**: 0.5mm card margin replaces QR border
+- **Result**: Faster, larger, just as scannable!
 
-## Workflow: Von URL zu 3D-Druck
+## Workflow: From URL to 3D Print
 
-### Option A: GUI (empfohlen für Einsteiger)
+### Option A: GUI (recommended for beginners)
 
-1. GUI starten: `./venv-gui/bin/python -m qr3d.app`
-2. URL eingeben: `https://ihre-website.de`
-3. Modus wählen: Pendant
-4. Parameter prüfen (oder Standardwerte nutzen)
-5. "Generate 3D Model" klicken
-6. ✅ Erfolg! → Öffne `generated/ihre-website-model.stl` in Slicer
-7. Drucken!
+1. Start GUI: `./venv-gui/bin/python -m qr3d.app`
+2. Enter URL: `https://your-website.com`
+3. Choose mode: Pendant
+4. Select size: Medium (1x) or adjust as needed
+5. Select thickness: Medium (1.0mm) or adjust as needed
+6. Review parameters (or use defaults)
+7. Click "Generate 3D Model"
+8. ✅ Success! → Open `generated/your-website-model.stl` in slicer
+9. Print!
 
-### Option B: Kommandozeile (schnell für Profis)
+### Option B: Command Line (fast for pros)
 
 ```bash
-./scripts/qr_generate.sh https://ihre-website.de --mode pendant --name meine-site
-# Warten ~1-2 Minuten
-# → generated/meine-site-model.stl ist fertig!
+./scripts/qr_generate.sh https://your-website.com --mode pendant --name my-site
+# Wait ~1-3 seconds (OpenSCAD 2025+)
+# → generated/my-site-model.stl is ready!
 ```
 
-### 3D-Druck-Einstellungen
+### 3D Print Settings
 
-**Material**: PLA, PETG, oder flexibles Filament
+**Material**: PLA, PETG, or flexible filament
 
-**Slicer-Settings:**
-- Layer-Höhe: **0.2mm** oder feiner für Details
-- Infill: **20%** ausreichend
-- Support: **Nicht nötig**
-- Brim/Raft: Optional für bessere Haftung
-- Druckgeschwindigkeit: Normal
+**Slicer Settings:**
+- Layer Height: **0.2mm** or finer for details
+- Infill: **20%** sufficient
+- Support: **Not needed**
+- Brim/Raft: Optional for better adhesion
+- Print Speed: Normal
 
-**Zwei-Farben-Druck (empfohlen):**
-1. Drucke bis 1.25mm (Basisplatte) in **Weiß**
-2. Pause einlegen (M600 oder manuell)
-3. Filament auf **Schwarz** wechseln
-4. Weiterdruck → QR-Code wird schwarz = bester Kontrast!
+**Two-Color Print (recommended):**
+1. Print up to 1.25mm (base plate) in **White**
+2. Pause (M600 or manual)
+3. Change filament to **Black**
+4. Continue → QR code becomes black = best contrast!
 
-## Tipps für beste Scan-Ergebnisse
+## Tips for Best Scan Results
 
-### Material & Farbe:
-- ✅ **Matt** statt glänzend (weniger Reflexionen)
-- ✅ **Schwarz/Weiß-Kontrast** für optimales Scannen
-- ✅ **PLA** für präzise Details
-- ❌ Transparente oder sehr dunkle einfarbige Drucke
+### Material & Color:
+- ✅ **Matte** instead of glossy (fewer reflections)
+- ✅ **Black/White contrast** for optimal scanning
+- ✅ **PLA** for precise details
+- ❌ Transparent or very dark single-color prints
 
-### QR-Code-Generierung:
-- **Error Correction**: Level H (30% Toleranz) - wird automatisch gesetzt
-- **Kurze URLs**: Weniger komplexe QR-Codes scannen besser
-- **URL-Shortener**: z.B. bit.ly für längere URLs
+### QR Code Generation:
+- **Error Correction**: Level H (30% tolerance) - set automatically
+- **Short URLs**: Less complex QR codes scan better
+- **URL Shorteners**: e.g., bit.ly for longer URLs
 
-### Nachbearbeitung (optional):
-- **Bemalen**: Acrylfarbe für Kontrast (schwarz auf weiß)
-- **Versiegeln**: Klarlack matt für Schutz
-- **Entgraten**: Scharfe Kanten abschleifen
+### Post-Processing (optional):
+- **Painting**: Acrylic paint for contrast (black on white)
+- **Sealing**: Matte clear coat for protection
+- **Deburring**: Sand sharp edges
 
-## Anpassungen
+## Customization
 
-### In der GUI:
-Alle Parameter direkt einstellbar:
-- **Card Height**: 0.5-5mm (dünner/dicker)
-- **QR Margin**: 0-10mm (Rand um QR-Code)
-- **QR Relief**: 0.1-2mm (Höhe des QR-Codes)
-- **Corner Radius**: 0-5mm (Ecken-Rundung)
+### In the GUI:
+All parameters directly adjustable:
+- **Card Height**: 0.5-5mm (thinner/thicker) - or use thickness presets
+- **QR Margin**: 0-10mm (border around QR code)
+- **QR Relief**: 0.1-2mm (height of QR code)
+- **Corner Radius**: 0-5mm (corner rounding)
+- **Size Scale**: Quick buttons for Small (0.5x), Medium (1x), Large (2x)
+- **Thickness**: Quick buttons for Thin (0.5mm), Medium (1.0mm), Thick (1.5mm)
 
-### OpenSCAD-Datei editieren:
-Die `.scad`-Datei kann in OpenSCAD geöffnet werden für:
-- Größen anpassen
-- Text hinzufügen
-- Logo integrieren
-- Komplexere Formen
+### Edit OpenSCAD File:
+The `.scad` file can be opened in OpenSCAD for:
+- Adjust dimensions
+- Add text
+- Integrate logo
+- More complex shapes
 
-## Projektstruktur
+## Project Structure
 
 ```
 QRs/
 ├── src/
 │   └── qr3d/                  # Python Package
 │       ├── __init__.py        # Package Init (Version 0.1.0)
-│       ├── app.py             # Desktop GUI (START HIER!)
-│       ├── generator.py       # Backend-Generator
+│       ├── app.py             # Desktop GUI (START HERE!)
+│       ├── generator.py       # Backend Generator
 │       ├── __main__.py        # CLI Entry Point
 │       └── gui/
 │           ├── __init__.py
-│           └── viewer_widget.py  # 3D-Viewer Komponente
+│           └── viewer_widget.py  # 3D Viewer Component
 ├── scripts/
-│   └── qr_generate.sh         # Shell-Wrapper für CLI
+│   └── qr_generate.sh         # Shell Wrapper for CLI
 ├── tests/                     # Test Suite (pytest)
 │   ├── test_generator.py
 │   └── test_version.py
 ├── venv-gui/                  # Python 3.13 Virtual Environment
-├── generated/                 # Alle generierten Dateien
-├── pyproject.toml             # Package-Konfiguration
-├── pytest.ini                 # Test-Konfiguration
-├── qr3d.spec                  # PyInstaller Build-Spec
-├── README.md                  # Diese Datei
-├── INSTALL.md                 # Installations-Anleitung
-└── CLAUDE.md                  # KI-Kontext für Claude Code
+├── generated/                 # All Generated Files
+├── pyproject.toml             # Package Configuration
+├── pytest.ini                 # Test Configuration
+├── qr3d.spec                  # PyInstaller Build Spec
+├── README.md                  # This File
+├── INSTALL.md                 # Installation Guide
+└── CLAUDE.md                  # AI Context for Claude Code
 ```
 
-## Technologie-Stack
+## Technology Stack
 
 - **Python 3.13** (venv-gui)
 - **PyQt6** - Desktop GUI Framework
-- **Pillow** - Bildverarbeitung
-- **qrcode** - QR-Code-Generierung
-- **OpenSCAD** - 3D-Modell-Rendering
+- **Pillow** - Image Processing
+- **qrcode** - QR Code Generation
+- **OpenSCAD** - 3D Model Rendering
 
-## Fehlerbehebung
+## Troubleshooting
 
-### GUI startet nicht
+### GUI doesn't start
 ```bash
-# Prüfe Python-Version
+# Check Python version
 ./venv-gui/bin/python --version
-# Sollte: Python 3.13.x
+# Should be: Python 3.13.x
 
-# Reinstall Dependencies
+# Reinstall dependencies
 ./venv-gui/bin/pip install -r requirements-gui.txt
 ```
 
@@ -556,28 +578,28 @@ brew install openscad
 sudo apt install openscad
 
 # Windows
-# Download von openscad.org
+# Download from openscad.org
 ```
 
-**Workaround**: Ohne OpenSCAD wird nur `.scad`-Datei erstellt. Diese manuell in OpenSCAD GUI öffnen und zu STL exportieren.
+**Workaround**: Without OpenSCAD, only `.scad` file is created. Open manually in OpenSCAD GUI and export to STL.
 
-### QR-Code wird nicht erkannt beim Scannen
-- **Zu wenig Kontrast**: Zwei-Farben-Druck nutzen
-- **Zu glänzend**: Mattes Filament verwenden
-- **Zu klein**: Minimum 45x45mm QR-Code-Bereich
-- **Druckqualität**: 0.2mm Layer-Höhe oder feiner
+### QR code not recognized when scanning
+- **Too little contrast**: Use two-color print
+- **Too glossy**: Use matte filament
+- **Too small**: Minimum 45x45mm QR code area
+- **Print quality**: 0.2mm layer height or finer
 
-### "Image file not found" bei URL-Input
-- GUI verwendet? URLs werden automatisch erkannt
-- CLI: `--name` Parameter nutzen für Custom-Benennung
-- Prüfen ob `generated/` Ordner existiert
+### "Image file not found" for URL input
+- Using GUI? URLs are detected automatically
+- CLI: Use `--name` parameter for custom naming
+- Check if `generated/` folder exists
 
-### Modell zu groß/klein
-- In GUI: Card Height Parameter anpassen
-- In .scad-Datei: Werte am Anfang editieren
-- Neu exportieren
+### Model too large/small
+- In GUI: Use size presets (Small/Medium/Large) or adjust Card Height parameter
+- In .scad file: Edit values at beginning
+- Re-export
 
-## Lizenz
+## License
 
 MIT License
 
@@ -591,16 +613,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## Support
 
-Bei Fragen oder Problemen:
-1. README vollständig lesen
-2. INSTALL.md prüfen
-3. Issue auf GitHub erstellen: https://github.com/pepperonas/qr-2-3d
-4. Oder Entwickler kontaktieren
+For questions or issues:
+1. Read README completely
+2. Check INSTALL.md
+3. Create issue on GitHub: https://github.com/pepperonas/qr-2-3d
+4. Or contact developer
 
 ---
 
-**Viel Erfolg beim Drucken! 🎯**
+**Happy Printing! 🎯**
 
-**Entwickler:** Martin Pfeffer (https://github.com/pepperonas)
-**Jahr:** 2025
-*Entwickelt mit Claude Code - Optimiert für maximale QR-Code-Fläche und Performance*
+**Developer:** Martin Pfeffer (https://github.com/pepperonas)
+**Year:** 2025
+*Developed with Claude Code - Optimized for maximum QR code area and performance*
