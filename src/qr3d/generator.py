@@ -42,6 +42,7 @@ class QRModelGenerator:
         self.qr_margin = 2.0    # mm - margin around QR code
         self.qr_relief = 0.5    # mm - height of raised QR code (default: dünn)
         self.corner_radius = 2  # mm - rounded corners
+        self.size_scale = 1.0   # Scale factor for card dimensions (0.5=klein, 1.0=mittel, 2.0=groß)
 
         # Pendant mode specific
         self.hole_diameter = 5  # mm
@@ -186,33 +187,36 @@ class QRModelGenerator:
         if self.mode in ['rectangle-text', 'pendant-text'] and self.text_content:
             text_area_height = self.text_size + self.text_margin + self.qr_margin  # text height + spacing + bottom margin
 
+        # Apply size scale to base card width
+        scaled_card_width = self.card_width * self.size_scale
+
         if self.mode == 'square':
             # Square mode: QR code with equal margins
-            available_width = self.card_width - (2 * self.qr_margin)
-            available_height = self.card_width - (2 * self.qr_margin)
-            card_length = self.card_width
+            available_width = scaled_card_width - (2 * self.qr_margin)
+            available_height = scaled_card_width - (2 * self.qr_margin)
+            card_length = scaled_card_width
             qr_offset_y = self.qr_margin
 
         elif self.mode == 'rectangle-text':
             # Rectangle-text mode: 54x64mm, QR top, text bottom
-            card_width = 54  # Custom width for rectangle
+            card_width = 54 * self.size_scale  # Custom width for rectangle
             available_width = card_width - (2 * self.qr_margin)
             available_height = available_width  # Keep QR code square
-            card_length = 64  # Fixed length for rectangle-text (reduced from 74)
+            card_length = 64 * self.size_scale  # Fixed length for rectangle-text (reduced from 74)
             qr_offset_y = self.qr_margin
 
         elif self.mode == 'pendant-text':
             # Pendant-text mode: Like pendant but with text area at bottom
-            available_width = self.card_width - (2 * self.qr_margin)
+            available_width = scaled_card_width - (2 * self.qr_margin)
             available_height = available_width  # Keep QR code square
-            card_length = available_height + self.qr_margin + self.top_margin + text_area_height
+            card_length = (available_height + self.qr_margin + self.top_margin + text_area_height)
             qr_offset_y = self.top_margin
 
         else:  # pendant mode
             # Pendant mode: extra space at top for hole
-            available_width = self.card_width - (2 * self.qr_margin)
+            available_width = scaled_card_width - (2 * self.qr_margin)
             available_height = available_width  # Keep QR code square
-            card_length = available_height + self.qr_margin + self.top_margin
+            card_length = (available_height + self.qr_margin + self.top_margin)
             qr_offset_y = self.top_margin
 
         pixel_size = min(available_width / qr_pixels, available_height / qr_pixels)
@@ -231,7 +235,7 @@ class QRModelGenerator:
 
         return {
             'card_length': card_length,
-            'card_width': self.card_width if self.mode != 'rectangle-text' else 54,
+            'card_width': scaled_card_width if self.mode != 'rectangle-text' else (54 * self.size_scale),
             'pixel_size': pixel_size,
             'qr_offset_x': self.qr_margin,
             'qr_offset_y': qr_offset_y,

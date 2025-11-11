@@ -72,6 +72,7 @@ class GeneratorThread(QThread):
             generator.qr_margin = self.params['margin']
             generator.qr_relief = self.params['relief']
             generator.corner_radius = self.params['corner_radius']
+            generator.size_scale = self.params['size_scale']
             generator.text_content = self.text_content
             generator.text_rotation = self.text_rotation
 
@@ -272,6 +273,67 @@ class SimpleMainWindow(QMainWindow):
         self.text_label.setVisible(False)
         self.text_field.setVisible(False)
         self.text_rotation_checkbox.setVisible(False)
+
+        # Size presets
+        size_preset_layout = QHBoxLayout()
+        size_preset_layout.addWidget(QLabel("Größe:"))
+
+        # Klein button
+        small_btn = QPushButton("Klein (0.5x)")
+        small_btn.clicked.connect(lambda: self.set_size_scale(0.5))
+        small_btn.setStyleSheet("""
+            QPushButton {
+                padding: 6px 12px;
+                background-color: #9E9E9E;
+                color: white;
+                border: none;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #757575;
+            }
+        """)
+        size_preset_layout.addWidget(small_btn)
+
+        # Mittel button (default)
+        medium_btn = QPushButton("Mittel (1x)")
+        medium_btn.clicked.connect(lambda: self.set_size_scale(1.0))
+        medium_btn.setStyleSheet("""
+            QPushButton {
+                padding: 6px 12px;
+                background-color: #2196F3;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #0b7dda;
+            }
+        """)
+        size_preset_layout.addWidget(medium_btn)
+
+        # Groß button
+        large_btn = QPushButton("Groß (2x)")
+        large_btn.clicked.connect(lambda: self.set_size_scale(2.0))
+        large_btn.setStyleSheet("""
+            QPushButton {
+                padding: 6px 12px;
+                background-color: #FF5722;
+                color: white;
+                border: none;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #e64a19;
+            }
+        """)
+        size_preset_layout.addWidget(large_btn)
+
+        mode_layout.addLayout(size_preset_layout)
+
+        # Store current size scale
+        self.current_size_scale = 1.0
 
         mode_group.setLayout(mode_layout)
         layout.addWidget(mode_group)
@@ -499,6 +561,10 @@ class SimpleMainWindow(QMainWindow):
         self.height_spin.setValue(card_height)
         self.relief_spin.setValue(qr_relief)
 
+    def set_size_scale(self, scale):
+        """Set the size scale factor (0.5 = klein, 1.0 = mittel, 2.0 = groß)"""
+        self.current_size_scale = scale
+
     def generate_model(self):
         """Start model generation in background thread"""
         input_text = self.input_field.text().strip()
@@ -551,7 +617,8 @@ class SimpleMainWindow(QMainWindow):
             'height': self.height_spin.value(),
             'margin': self.margin_spin.value(),
             'relief': self.relief_spin.value(),
-            'corner_radius': self.corner_spin.value()
+            'corner_radius': self.corner_spin.value(),
+            'size_scale': self.current_size_scale
         }
 
         # Start generation in background
