@@ -242,7 +242,7 @@ class QRModelGenerator:
 // Generated from: {self.image_path.name}
 // Mode: {self.mode}
 
-$fn = 12;  // Smoothness of curves (optimized for speed)
+$fn = 8;  // Smoothness of curves (optimized for speed - 8 segments sufficient for 3D printing)
 
 // Parameters
 card_width = {dimensions['card_width']};
@@ -345,6 +345,16 @@ module qr_pattern() {{
         rows = len(matrix)
         cols = len(matrix[0]) if rows > 0 else 0
 
+        # Helper to round floats to 3 decimal places for readability
+        def round_floats(obj):
+            if isinstance(obj, float):
+                return round(obj, 3)
+            elif isinstance(obj, dict):
+                return {k: round_floats(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [round_floats(item) for item in obj]
+            return obj
+
         metadata = {
             "generated_at": datetime.now().isoformat(),
             "version": "0.1.0",
@@ -384,7 +394,8 @@ module qr_pattern() {{
                 "font": "Liberation Mono:style=Bold"
             }
 
-        return metadata
+        # Round all float values to 3 decimal places for better readability
+        return round_floats(metadata)
 
     def export_stl(self, scad_path, stl_path, background=False):
         """Export STL using OpenSCAD command line"""
