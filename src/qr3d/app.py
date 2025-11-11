@@ -245,13 +245,18 @@ class SimpleMainWindow(QMainWindow):
 
         self.mode_combo = QComboBox()
         self.mode_combo.addItems([
-            "Square (55x55mm)",
+            "Square",
             "Pendant (with hole)",
-            "Rectangle + Text (54x64mm)",
-            "Pendant + Text (55x65mm)"
+            "Rectangle + Text",
+            "Pendant + Text"
         ])
         self.mode_combo.currentIndexChanged.connect(self.on_mode_changed)
         mode_layout.addWidget(self.mode_combo)
+
+        # Size display label
+        self.size_label = QLabel()
+        self.size_label.setStyleSheet("color: #666; font-size: 11px; padding: 2px 0px;")
+        mode_layout.addWidget(self.size_label)
 
         # Text input (only visible for text modes)
         text_layout = QHBoxLayout()
@@ -513,10 +518,8 @@ class SimpleMainWindow(QMainWindow):
             "Tips:\n"
             "• Enter a URL to generate QR code automatically\n"
             "• Or select a PNG/JPG image file\n"
-            "• Square mode: 55x55mm\n"
-            "• Pendant mode: 55x61mm with chain hole\n"
-            "• Rectangle+Text: 54x64mm with text label\n"
-            "• Pendant+Text: ~55x65mm with hole and text\n"
+            "• Use size buttons (Klein/Mittel/Groß) to scale the model\n"
+            "• Current dimensions are shown below the model type\n"
             "• Generated files will be in 'generated' folder"
         )
         info_label.setStyleSheet("""
@@ -528,6 +531,9 @@ class SimpleMainWindow(QMainWindow):
         """)
         info_label.setWordWrap(True)
         layout.addWidget(info_label)
+
+        # Initialize size label
+        self.update_size_label()
 
     def browse_file(self):
         """Open file browser to select image"""
@@ -556,6 +562,9 @@ class SimpleMainWindow(QMainWindow):
         is_rectangle_text = index == 2
         self.text_rotation_checkbox.setVisible(is_rectangle_text)
 
+        # Update size label
+        self.update_size_label()
+
     def set_thickness(self, card_height, qr_relief):
         """Set both card height and QR relief to preset values"""
         self.height_spin.setValue(card_height)
@@ -564,6 +573,34 @@ class SimpleMainWindow(QMainWindow):
     def set_size_scale(self, scale):
         """Set the size scale factor (0.5 = klein, 1.0 = mittel, 2.0 = groß)"""
         self.current_size_scale = scale
+        self.update_size_label()
+
+    def update_size_label(self):
+        """Update the size label based on current mode and scale"""
+        mode_index = self.mode_combo.currentIndex()
+        scale = self.current_size_scale
+
+        # Base dimensions (at scale 1.0)
+        if mode_index == 0:  # Square
+            width = 55 * scale
+            length = 55 * scale
+            size_text = f"Größe: {width:.1f} x {length:.1f} mm"
+        elif mode_index == 1:  # Pendant
+            width = 55 * scale
+            length = 61 * scale  # 55 + 6mm for hole area
+            size_text = f"Größe: {width:.1f} x {length:.1f} mm"
+        elif mode_index == 2:  # Rectangle + Text
+            width = 54 * scale
+            length = 64 * scale
+            size_text = f"Größe: {width:.1f} x {length:.1f} mm"
+        elif mode_index == 3:  # Pendant + Text
+            width = 55 * scale
+            length = 65 * scale  # Approximate
+            size_text = f"Größe: {width:.1f} x {length:.1f} mm"
+        else:
+            size_text = ""
+
+        self.size_label.setText(size_text)
 
     def generate_model(self):
         """Start model generation in background thread"""
