@@ -75,6 +75,8 @@ class GeneratorThread(QThread):
             generator.size_scale = self.params['size_scale']
             generator.text_content = self.text_content
             generator.text_rotation = self.text_rotation
+            # Sync text relief with QR relief (always same height)
+            generator.text_height = self.params['relief']
 
             self.progress.emit("Creating 3D model...")
             scad_path, stl_path, json_path = generator.generate(qr_input=self.input_path)
@@ -155,6 +157,7 @@ class BatchGeneratorThread(QThread):
                     # Text mode parameters
                     generator.text_content = model_config.get('text', '')
                     generator.text_rotation = model_config.get('text_rotation', 0)
+                    generator.text_height = generator.qr_relief  # Sync text relief with QR relief
 
                     # Generate model
                     self.progress.emit(f"Creating 3D model for {name}...")
@@ -374,8 +377,9 @@ class SimpleMainWindow(QMainWindow):
         self.margin_spin.setSuffix(" mm")
         params_layout.addWidget(self.margin_spin, 0, 3)
 
-        # Row 2, Column 1: QR Relief
-        params_layout.addWidget(QLabel("QR Relief:"), 1, 0)
+        # Row 2, Column 1: Relief (QR and Text)
+        self.relief_label = QLabel("QR Relief:")
+        params_layout.addWidget(self.relief_label, 1, 0)
         self.relief_spin = QDoubleSpinBox()
         self.relief_spin.setRange(0.1, 2.0)
         self.relief_spin.setValue(0.5)  # Default: Dünn
@@ -587,6 +591,12 @@ class SimpleMainWindow(QMainWindow):
         # Auto-check rotation checkbox for Rectangle+Text mode
         if is_rectangle_text:
             self.text_rotation_checkbox.setChecked(True)
+
+        # Update relief label based on mode
+        if is_text_mode:
+            self.relief_label.setText("QR/Text Relief:")
+        else:
+            self.relief_label.setText("QR Relief:")
 
         # Update size label
         self.update_size_label()
