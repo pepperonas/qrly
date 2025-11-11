@@ -38,9 +38,9 @@ class QRModelGenerator:
 
         # Design parameters
         self.card_width = 55    # mm - credit card width
-        self.card_height = 1.25 # mm - card thickness
+        self.card_height = 0.5  # mm - card thickness (default: dünn)
         self.qr_margin = 2.0    # mm - margin around QR code
-        self.qr_relief = 1.0    # mm - height of raised QR code
+        self.qr_relief = 0.5    # mm - height of raised QR code (default: dünn)
         self.corner_radius = 2  # mm - rounded corners
 
         # Pendant mode specific

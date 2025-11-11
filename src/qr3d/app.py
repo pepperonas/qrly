@@ -290,7 +290,7 @@ class SimpleMainWindow(QMainWindow):
         params_layout.addWidget(QLabel("Card Height:"), 0, 0)
         self.height_spin = QDoubleSpinBox()
         self.height_spin.setRange(0.5, 5.0)
-        self.height_spin.setValue(1.25)
+        self.height_spin.setValue(0.5)  # Default: Dünn
         self.height_spin.setSingleStep(0.25)
         self.height_spin.setSuffix(" mm")
         params_layout.addWidget(self.height_spin, 0, 1)
@@ -308,7 +308,7 @@ class SimpleMainWindow(QMainWindow):
         params_layout.addWidget(QLabel("QR Relief:"), 1, 0)
         self.relief_spin = QDoubleSpinBox()
         self.relief_spin.setRange(0.1, 2.0)
-        self.relief_spin.setValue(1.0)
+        self.relief_spin.setValue(0.5)  # Default: Dünn
         self.relief_spin.setSingleStep(0.1)
         self.relief_spin.setSuffix(" mm")
         params_layout.addWidget(self.relief_spin, 1, 1)
@@ -324,6 +324,65 @@ class SimpleMainWindow(QMainWindow):
 
         params_group.setLayout(params_layout)
         layout.addWidget(params_group)
+
+        # Thickness presets
+        thickness_group = QGroupBox("Dicken-Presets")
+        thickness_layout = QHBoxLayout()
+
+        # Dünn button (default)
+        thin_btn = QPushButton("Dünn (0.5mm)")
+        thin_btn.clicked.connect(lambda: self.set_thickness(0.5, 0.5))
+        thin_btn.setStyleSheet("""
+            QPushButton {
+                padding: 8px 16px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+        thickness_layout.addWidget(thin_btn)
+
+        # Mittel button
+        medium_btn = QPushButton("Mittel (1.0mm)")
+        medium_btn.clicked.connect(lambda: self.set_thickness(1.0, 1.0))
+        medium_btn.setStyleSheet("""
+            QPushButton {
+                padding: 8px 16px;
+                background-color: #2196F3;
+                color: white;
+                border: none;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #0b7dda;
+            }
+        """)
+        thickness_layout.addWidget(medium_btn)
+
+        # Dick button
+        thick_btn = QPushButton("Dick (1.5mm)")
+        thick_btn.clicked.connect(lambda: self.set_thickness(1.5, 1.5))
+        thick_btn.setStyleSheet("""
+            QPushButton {
+                padding: 8px 16px;
+                background-color: #FF9800;
+                color: white;
+                border: none;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #e68900;
+            }
+        """)
+        thickness_layout.addWidget(thick_btn)
+
+        thickness_group.setLayout(thickness_layout)
+        layout.addWidget(thickness_group)
 
         # Generate button
         self.generate_btn = QPushButton("Generate 3D Model")
@@ -440,6 +499,11 @@ class SimpleMainWindow(QMainWindow):
         # Pendant+Text (index 3) always uses 180° rotation automatically
         is_rectangle_text = index == 2
         self.text_rotation_checkbox.setVisible(is_rectangle_text)
+
+    def set_thickness(self, card_height, qr_relief):
+        """Set both card height and QR relief to preset values"""
+        self.height_spin.setValue(card_height)
+        self.relief_spin.setValue(qr_relief)
 
     def generate_model(self):
         """Start model generation in background thread"""
