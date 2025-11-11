@@ -8,6 +8,8 @@ import argparse
 import os
 import sys
 import re
+import json
+from datetime import datetime
 from pathlib import Path
 from PIL import Image
 import subprocess
@@ -338,6 +340,52 @@ module qr_pattern() {{
             f.write(scad_code)
         print(f"✓ OpenSCAD file created: {output_path}")
 
+    def create_metadata_json(self, dimensions, matrix, qr_input=None):
+        """Create JSON metadata file with model configuration"""
+        rows = len(matrix)
+        cols = len(matrix[0]) if rows > 0 else 0
+
+        metadata = {
+            "generated_at": datetime.now().isoformat(),
+            "version": "0.1.0",
+            "mode": self.mode,
+            "qr_input": qr_input or str(self.image_path.name),
+            "dimensions": {
+                "card_width_mm": dimensions['card_width'],
+                "card_length_mm": dimensions['card_length'],
+                "card_height_mm": self.card_height,
+                "qr_size_mm": dimensions['qr_size'],
+                "qr_pixel_size_mm": dimensions['pixel_size'],
+                "qr_grid": f"{cols}x{rows}"
+            },
+            "parameters": {
+                "qr_margin_mm": self.qr_margin,
+                "qr_relief_mm": self.qr_relief,
+                "corner_radius_mm": self.corner_radius
+            }
+        }
+
+        # Add pendant-specific data
+        if self.mode in ['pendant', 'pendant-text']:
+            metadata["pendant"] = {
+                "hole_diameter_mm": self.hole_diameter,
+                "hole_from_top_mm": self.hole_from_top,
+                "top_margin_mm": self.top_margin
+            }
+
+        # Add text-specific data
+        if self.mode in ['rectangle-text', 'pendant-text'] and self.text_content:
+            metadata["text"] = {
+                "content": self.text_content,
+                "size_mm": self.text_size,
+                "height_mm": self.text_height,
+                "margin_mm": self.text_margin,
+                "rotation_deg": self.text_rotation,
+                "font": "Liberation Mono:style=Bold"
+            }
+
+        return metadata
+
     def export_stl(self, scad_path, stl_path, background=False):
         """Export STL using OpenSCAD command line"""
         try:
@@ -398,7 +446,7 @@ module qr_pattern() {{
                 print(f"⚠ Could not start background process: {e}")
                 return False
 
-    def generate(self):
+    def generate(self, qr_input=None):
         """Main generation process"""
         print(f"Processing: {self.image_path.name}")
         print(f"Mode: {self.mode}")
@@ -412,14 +460,27 @@ module qr_pattern() {{
         dimensions = self.calculate_dimensions(width)
         print(f"  Model size: {dimensions['card_width']}x{dimensions['card_length']}x{self.card_height}mm")
 
+        # Create model-specific subdirectory
+        base_name = self.image_path.stem  # filename without extension
+        model_dir = self.output_dir / base_name
+        model_dir.mkdir(parents=True, exist_ok=True)
+        print(f"→ Output directory: {model_dir}")
+
         # Generate OpenSCAD code
         print("→ Generating OpenSCAD code...")
         scad_code = self.generate_openscad(matrix, dimensions)
 
-        # Determine output filenames
-        base_name = self.image_path.stem  # filename without extension
-        scad_file = self.output_dir / f"{base_name}-model.scad"
-        stl_file = self.output_dir / f"{base_name}-model.stl"
+        # Determine output filenames (all in model subdirectory)
+        qr_file = model_dir / f"{base_name}.png"
+        scad_file = model_dir / f"{base_name}.scad"
+        stl_file = model_dir / f"{base_name}.stl"
+        json_file = model_dir / f"{base_name}.json"
+
+        # Copy QR code image to model directory (if it's not already there)
+        if self.image_path.parent != model_dir:
+            import shutil
+            shutil.copy2(self.image_path, qr_file)
+            print(f"✓ QR code copied to: {qr_file}")
 
         # Save SCAD file
         self.save_scad_file(scad_code, scad_file)
@@ -428,8 +489,15 @@ module qr_pattern() {{
         print("→ Exporting STL...")
         self.export_stl(scad_file, stl_file)
 
-        print("\n✅ Done!")
-        return scad_file, stl_file
+        # Create metadata JSON
+        print("→ Creating metadata JSON...")
+        metadata = self.create_metadata_json(dimensions, matrix, qr_input=qr_input)
+        with open(json_file, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=2, ensure_ascii=False)
+        print(f"✓ Metadata saved: {json_file}")
+
+        print(f"\n✅ Done! All files in: {model_dir}")
+        return scad_file, stl_file, json_file
 
 
 def main():
@@ -508,7 +576,7 @@ Examples:
         else:
             generator.text_rotation = args.text_rotation
 
-        generator.generate()
+        scad_file, stl_file, json_file = generator.generate(qr_input=args.input)
     except Exception as e:
         print(f"❌ Error: {e}")
         sys.exit(1)

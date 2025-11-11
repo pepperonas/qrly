@@ -77,7 +77,7 @@ class GeneratorThread(QThread):
             generator.text_rotation = self.text_rotation
 
             self.progress.emit("Creating 3D model...")
-            scad_path, stl_path = generator.generate()
+            scad_path, stl_path, json_path = generator.generate(qr_input=self.input_path)
 
             self.progress.emit("Model generated successfully!")
             self.finished.emit(True, str(stl_path), f"Generated: {Path(stl_path).name}")
@@ -157,7 +157,7 @@ class BatchGeneratorThread(QThread):
 
                     # Generate model
                     self.progress.emit(f"Creating 3D model for {name}...")
-                    scad_path, stl_path = generator.generate()
+                    scad_path, stl_path, json_path = generator.generate(qr_input=url)
 
                     successful += 1
                     self.progress.emit(f"✅ {name} completed ({idx}/{total})")
