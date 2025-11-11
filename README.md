@@ -6,9 +6,23 @@ Automatically generate 3D-printable QR code models from URLs or PNG/JPG images -
 
 ![Generated 3D Models](docs/images/screenshot-3d-models.png)
 
+## Version 0.3.0 - Latest Updates
+
+**New Features:**
+- **Synchronized Relief Heights**: QR code and text relief now always have the same height for consistent appearance
+- **Dynamic Relief Label**: UI label updates based on model type ("QR Relief:" vs "QR/Text Relief:")
+- **Drag & Drop JSON Loading**: Drop any JSON metadata file onto the GUI to instantly load all settings
+- **Optimized Layout**: Better spacing and proportions in GUI for improved usability
+
+**Improvements:**
+- Better visual consistency across all model types
+- Faster workflow with JSON configuration loading
+- More intuitive user interface
+
 ## Features
 
 - **Desktop GUI**: User-friendly application with real-time parameter preview
+- **Drag & Drop**: Load all settings by dropping JSON metadata files onto the GUI
 - **Batch Processing**: Automatically generate multiple models via JSON configuration
 - **URL Support**: Generate QR codes directly from URLs
 - **Four Modes**:
@@ -393,7 +407,7 @@ For generating multiple models at once, batch functionality is available:
 | Hole Diameter | 5mm |
 | Hole Position | 6mm from top edge, horizontally centered |
 | **Text Size** | **3-6mm** (dynamically scaled based on text length) |
-| **Text Relief** | **1mm** (same as QR code) |
+| **Text Relief** | **Always synced with QR Relief** (ensures consistent height) |
 | **Text Spacing** | **2mm** (distance to QR code) |
 | **Text Font** | **Liberation Mono Bold** (Monospace) |
 | **Text Rotation** | **0° or 180°** (Rectangle: selectable, Pendant: automatic 180°) |
