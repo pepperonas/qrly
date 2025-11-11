@@ -6,6 +6,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **QR Code 3D Model Generator** - Desktop application and CLI tool for generating 3D-printable QR code models from URLs or images. Designed for credit card-sized (55x55mm) physical QR codes optimized for 3D printing.
 
+**Current Version:** 0.3.0
+
+## Recent Updates (v0.3.0)
+
+**New Features:**
+1. **Synchronized Relief Heights** - QR and text relief always have same height (`generator.text_height = generator.qr_relief`)
+2. **Dynamic Relief Label** - UI label updates based on mode: "QR Relief:" vs "QR/Text Relief:" (app.py:592-596)
+3. **Drag & Drop JSON Loading** - Drop JSON metadata files onto GUI to load all settings (app.py:924-1002)
+4. **Smart Output Naming** - Auto-generated names include size/thickness: `{name}-{size}-{thickness}` (generator.py:492-495)
+5. **Optimized Layout** - Better GUI spacing and proportions (app.py:218, 245-246, etc.)
+
+**Key Improvements:**
+- Relief label stored as reference for dynamic updates (`self.relief_label`)
+- Size labels: small (0.5x), medium (1.0x), large (2.0x)
+- Thickness labels: thin (≤0.6mm), medium (0.7-1.3mm), thick (≥1.4mm)
+- Both single and batch generation sync text height with QR relief
+
 ## Technology Stack
 
 - **Python 3.13** (venv-gui)
@@ -20,10 +37,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```
 QRs/
 ├── src/
-│   └── qr3d/                  # Main Python package (v0.1.0)
-│       ├── __init__.py        # Package init (__version__ = "0.1.0")
-│       ├── app.py             # Desktop GUI application (formerly src/qr3d/app.py)
-│       ├── generator.py       # Backend generator (formerly src/qr3d/generator.py)
+│   └── qr3d/                  # Main Python package (v0.3.0)
+│       ├── __init__.py        # Package init (__version__ = "0.3.0")
+│       ├── app.py             # Desktop GUI application with drag-and-drop support
+│       ├── generator.py       # Backend generator with smart naming
 │       ├── __main__.py        # CLI entry point
 │       └── gui/
 │           ├── __init__.py
@@ -35,15 +52,16 @@ QRs/
 │   └── test_version.py        # Version tests
 ├── venv-gui/                  # Python 3.13 virtual environment
 ├── generated/                 # Output directory (subdirectories per model)
-│   ├── model-name/            # Each model in own subdirectory
-│   │   ├── model-name.png     # QR code image
-│   │   ├── model-name.json    # Configuration metadata
-│   │   ├── model-name.scad    # OpenSCAD source
-│   │   └── model-name.stl     # 3D model (printable)
-│   └── ...
+│   ├── example-medium-medium/ # Format: {name}-{size}-{thickness}
+│   │   ├── example-medium-medium.png
+│   │   ├── example-medium-medium.json
+│   │   ├── example-medium-medium.scad
+│   │   └── example-medium-medium.stl
+│   ├── github-large-thin/     # Large (2.0x), thin (0.5mm)
+│   └── mysite-small-thick/    # Small (0.5x), thick (1.5mm)
 ├── batch/                     # Batch processing (user-specific, gitignored)
 │   └── config.json            # Batch configuration file
-├── pyproject.toml             # Package configuration (setuptools, version, entry points)
+├── pyproject.toml             # Package configuration (v0.3.0)
 ├── pytest.ini                 # Test configuration
 ├── qr3d.spec                  # PyInstaller build specification
 ├── README.md                  # User documentation

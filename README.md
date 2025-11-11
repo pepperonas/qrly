@@ -12,11 +12,13 @@ Automatically generate 3D-printable QR code models from URLs or PNG/JPG images -
 - **Synchronized Relief Heights**: QR code and text relief now always have the same height for consistent appearance
 - **Dynamic Relief Label**: UI label updates based on model type ("QR Relief:" vs "QR/Text Relief:")
 - **Drag & Drop JSON Loading**: Drop any JSON metadata file onto the GUI to instantly load all settings
+- **Smart Output Naming**: Auto-generated folder names include size (small/medium/large) and thickness (thin/medium/thick) labels
 - **Optimized Layout**: Better spacing and proportions in GUI for improved usability
 
 **Improvements:**
 - Better visual consistency across all model types
 - Faster workflow with JSON configuration loading
+- Instant identification of model specifications from folder names
 - More intuitive user interface
 
 ## Features
@@ -154,21 +156,35 @@ qr3d https://your-website.com --mode pendant --name my-site
 
 ### Output Organization
 
-Each generated model gets its own subfolder in `generated/`:
+Each generated model gets its own subfolder in `generated/` with automatic size and thickness labels:
+
+**Naming Format:** `{name}-{size}-{thickness}`
+- **Size**: `small` (0.5x), `medium` (1.0x), `large` (2.0x)
+- **Thickness**: `thin` (≤0.6mm), `medium` (0.7-1.3mm), `thick` (≥1.4mm)
 
 ```
 generated/
-├── my-site/
-│   ├── my-site.png          # QR code image
-│   ├── my-site.json         # Configuration metadata
-│   ├── my-site.scad         # OpenSCAD source code
-│   └── my-site.stl          # 3D model (print-ready)
-└── github-pendant/
-    ├── github-pendant.png
-    ├── github-pendant.json
-    ├── github-pendant.scad
-    └── github-pendant.stl
+├── my-site-medium-medium/       # Standard: 1.0x scale, 1.25mm height
+│   ├── my-site-medium-medium.png
+│   ├── my-site-medium-medium.json
+│   ├── my-site-medium-medium.scad
+│   └── my-site-medium-medium.stl
+├── github-large-thin/           # Large: 2.0x scale, 0.5mm height
+│   ├── github-large-thin.png
+│   ├── github-large-thin.json
+│   ├── github-large-thin.scad
+│   └── github-large-thin.stl
+└── example-small-thick/         # Small: 0.5x scale, 1.5mm height
+    ├── example-small-thick.png
+    ├── example-small-thick.json
+    ├── example-small-thick.scad
+    └── example-small-thick.stl
 ```
+
+**Benefits:**
+- Instant visual identification of model specifications from folder name
+- No need to open files to check size/thickness settings
+- Better organization when generating multiple variants
 
 **JSON Metadata** contains:
 - Timestamp and version
