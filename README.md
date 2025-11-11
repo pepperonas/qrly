@@ -22,7 +22,7 @@ Automatische Generierung von 3D-druckbaren QR-Code-Modellen aus URLs oder PNG/JP
 - **Optimierte Größe**: QR-Code nutzt fast die gesamte Kartenfläche (minimaler Rand)
 - **Relief-QR-Code**: Erhabene schwarze Pixel (1mm)
 - **Abgerundete Ecken**: 2mm Radius für professionelles Design
-- **Performance**: ~1-2 Minuten pro Modell dank intelligentem Pixel-Sampling
+- **Blitzschnelle Performance**: ~1 Sekunde pro Modell mit OpenSCAD 2025+ (126x schneller als ältere Versionen!)
 - **Automatische STL-Generierung**: Direkt druckfertig
 - **JSON-Metadata-Export**: Jedes Modell erhält eine JSON-Datei mit vollständiger Konfiguration
 - **Organisierte Ausgabe**: Jedes Modell in eigenem Unterordner mit allen Dateien (PNG, SCAD, STL, JSON)

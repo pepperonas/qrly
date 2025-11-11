@@ -17,6 +17,17 @@ import qrcode
 import tempfile
 
 
+def find_openscad_binary():
+    """Find OpenSCAD binary, checking macOS .app first, then PATH"""
+    # Check for macOS application
+    macos_path = "/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD"
+    if os.path.exists(macos_path):
+        return macos_path
+
+    # Fall back to 'openscad' in PATH
+    return 'openscad'
+
+
 class QRModelGenerator:
     """Generate 3D models from QR code images"""
 
@@ -400,11 +411,16 @@ module qr_pattern() {{
     def export_stl(self, scad_path, stl_path, background=False):
         """Export STL using OpenSCAD command line"""
         try:
+            openscad_bin = find_openscad_binary()
+
+            # Build command with fast-csg optimization (requires OpenSCAD 2023+)
+            cmd = [openscad_bin, '-o', str(stl_path), '--enable=fast-csg', str(scad_path)]
+
             if background:
                 # Start OpenSCAD in background
                 print(f"  Starting OpenSCAD export in background...")
                 process = subprocess.Popen(
-                    ['openscad', '-o', str(stl_path), str(scad_path)],
+                    cmd,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL
                 )
@@ -415,7 +431,7 @@ module qr_pattern() {{
                 # Run OpenSCAD synchronously with progress indicator
                 print(f"  Rendering 3D model... (this may take 30-60 seconds)")
                 result = subprocess.run(
-                    ['openscad', '-o', str(stl_path), str(scad_path)],
+                    cmd,
                     capture_output=True,
                     text=True,
                     timeout=120  # 2 minutes timeout
