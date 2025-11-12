@@ -64,3 +64,6 @@ parts/
 sdist/
 var/
 wheels/
+
+# Generated icon source (keep generated icons, ignore source)
+assets/icons/source_icon.png

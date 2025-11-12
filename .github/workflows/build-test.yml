@@ -64,9 +64,9 @@ jobs:
 
     - name: Test imports
       run: |
-        python -c "from qr3d import __version__; print(f'Version: {__version__}')"
-        python -c "from qr3d.app import SimpleMainWindow; print('GUI imports successful')"
-        python -c "from qr3d.generator import QRModelGenerator; print('Generator imports successful')"
+        python -c "from qrly import __version__; print(f'Version: {__version__}')"
+        python -c "from qrly.app import SimpleMainWindow; print('GUI imports successful')"
+        python -c "from qrly.generator import QRModelGenerator; print('Generator imports successful')"
 
   build-check:
     name: Build Check on ${{ matrix.os }}
@@ -100,36 +100,36 @@ jobs:
     - name: Build with PyInstaller (macOS)
       if: runner.os == 'macOS'
       run: |
-        pyinstaller qr3d.spec --clean --noconfirm
+        pyinstaller qrly.spec --clean --noconfirm
         ls -la dist/
 
     - name: Build with PyInstaller (Linux)
       if: runner.os == 'Linux'
       run: |
-        pyinstaller qr3d.spec --clean --noconfirm
+        pyinstaller qrly.spec --clean --noconfirm
         ls -la dist/
 
     - name: Build with PyInstaller (Windows)
       if: runner.os == 'Windows'
       run: |
-        pyinstaller qr3d.spec --clean --noconfirm
+        pyinstaller qrly.spec --clean --noconfirm
         dir dist\
 
     - name: Verify build output (macOS)
       if: runner.os == 'macOS'
       run: |
-        test -d dist/QR3DGenerator.app || exit 1
+        test -d dist/Qrly.app || exit 1
         echo "macOS .app bundle created successfully"
 
     - name: Verify build output (Linux)
       if: runner.os == 'Linux'
       run: |
-        test -f dist/QR3DGenerator/QR3DGenerator || exit 1
+        test -f dist/Qrly/Qrly || exit 1
         echo "Linux executable created successfully"
 
     - name: Verify build output (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
-        if (!(Test-Path "dist\QR3DGenerator\QR3DGenerator.exe")) { exit 1 }
+        if (!(Test-Path "dist\Qrly\Qrly.exe")) { exit 1 }
         Write-Host "Windows executable created successfully"

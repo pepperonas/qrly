@@ -1,9 +1,14 @@
-name: Release Build
+name: Release Build with OpenSCAD
 
 on:
   push:
     tags:
-      - 'v*'  # Trigger on version tags like v0.0.1, v1.2.3, etc.
+      - 'v*'  # Trigger on version tags like v0.3.0, v1.0.0, etc.
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  OPENSCAD_VERSION: "2025.11.10"
+  APP_VERSION: "0.3.0"
 
 jobs:
   create-release:
@@ -19,46 +24,80 @@ jobs:
 
     - name: Get version from tag
       id: get_version
-      run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        else
+          echo "version=${{ env.APP_VERSION }}" >> $GITHUB_OUTPUT
+        fi
 
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.ref }}
-        release_name: QR Code 3D Generator v${{ steps.get_version.outputs.version }}
+        tag_name: ${{ github.ref_name }}
+        name: Qrly v${{ steps.get_version.outputs.version }}
         draft: false
         prerelease: false
         body: |
-          ## QR Code 3D Generator v${{ steps.get_version.outputs.version }}
+          ## Qrly - QR Code 3D Generator v${{ steps.get_version.outputs.version }}
 
-          ### Downloads
+          Generate 3D-printable QR code models from URLs or images with **bundled OpenSCAD ${{ env.OPENSCAD_VERSION }}**.
 
-          Choose the appropriate installer for your operating system:
+          ### ✨ What's New
 
-          - **macOS**: QR3DGenerator-${{ steps.get_version.outputs.version }}-macOS.dmg (or .app.zip)
-          - **Windows**: QR3DGenerator-${{ steps.get_version.outputs.version }}-Windows.zip
-          - **Linux**: QR3DGenerator-${{ steps.get_version.outputs.version }}-Linux.tar.gz
+          - 🚀 **No external dependencies**: OpenSCAD is bundled with the app
+          - ⚡ **Fast rendering**: OpenSCAD 2025 with fast-csg mode (~1 second per model)
+          - 📦 **Native installers**: DMG for macOS, EXE installer for Windows, AppImage for Linux
+          - 🎯 **Text modes**: Add custom text labels to your QR codes
+          - 🔄 **Batch processing**: Generate multiple models from JSON config
 
-          ### Requirements
+          ### 📥 Downloads
 
-          - **OpenSCAD**: Must be installed separately
-            - macOS: `brew install openscad` or download from https://openscad.org/
-            - Windows: Download from https://openscad.org/
-            - Linux: `sudo apt install openscad` or from https://openscad.org/
+          Choose the installer for your operating system:
 
-          ### Installation
+          | Platform | File | Installation |
+          |----------|------|--------------|
+          | **macOS** | `Qrly-${{ steps.get_version.outputs.version }}-macOS.dmg` | Double-click DMG, drag to Applications |
+          | **Windows** | `Qrly-${{ steps.get_version.outputs.version }}-Windows-Setup.exe` | Run installer, follow wizard |
+          | **Linux** | `Qrly-${{ steps.get_version.outputs.version }}-Linux.AppImage` | Make executable: `chmod +x *.AppImage`, then run |
 
-          See the [README](https://github.com/${{ github.repository }}/blob/main/README.md) for detailed installation instructions.
+          ### 🎯 Features
+
+          - **4 Modes**: Square, Pendant, Rectangle+Text, Pendant+Text
+          - **Text Labels**: Add up to 20 characters under QR code (auto-scaled 3-6mm)
+          - **Credit Card Size**: 55x55mm base (ISO 7810 standard)
+          - **OpenSCAD Bundled**: No separate installation needed
+          - **Batch Generation**: Process multiple QR codes from JSON config
+          - **Drag & Drop**: Load previous settings from JSON metadata files
+
+          ### 📖 Quick Start
+
+          1. Download the installer for your platform
+          2. Install/run the application
+          3. Enter a URL or select an image file
+          4. Choose mode and adjust parameters
+          5. Click "Generate STL" - done in ~1 second!
+
+          ### 🔧 System Requirements
+
+          - **macOS**: 10.13+ (High Sierra or later)
+          - **Windows**: Windows 10+ (64-bit)
+          - **Linux**: Most modern distributions (x86_64)
+
+          ### 📝 Documentation
+
+          - [README](https://github.com/${{ github.repository }}/blob/main/README.md)
+          - [Installation Guide](https://github.com/${{ github.repository }}/blob/main/INSTALL.md)
 
           ---
 
-          _Built automatically by GitHub Actions_
+          _Built with ❤️ using Python 3.13, PyQt6, and OpenSCAD ${{ env.OPENSCAD_VERSION }}_
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-macos:
-    name: Build macOS
+    name: Build macOS with OpenSCAD
     needs: create-release
     runs-on: macos-latest
 
@@ -71,39 +110,76 @@ jobs:
       with:
         python-version: '3.13'
 
+    - name: Download OpenSCAD 2025
+      run: |
+        echo "Downloading OpenSCAD ${{ env.OPENSCAD_VERSION }} for macOS..."
+        # Download from official OpenSCAD releases (adjust URL when 2025 is released)
+        # For now, using latest snapshot - replace with official release when available
+        curl -L "https://files.openscad.org/snapshots/OpenSCAD-${{ env.OPENSCAD_VERSION }}-arm64.dmg" -o openscad.dmg || \
+        curl -L "https://files.openscad.org/snapshots/OpenSCAD-${{ env.OPENSCAD_VERSION }}-universal.dmg" -o openscad.dmg
+
+        # Mount DMG and extract OpenSCAD.app
+        hdiutil attach openscad.dmg
+        mkdir -p openscad_bundle
+        cp -R /Volumes/OpenSCAD/OpenSCAD.app openscad_bundle/
+        hdiutil detach /Volumes/OpenSCAD
+        rm openscad.dmg
+
+        echo "✓ OpenSCAD extracted to openscad_bundle/"
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -e .
         pip install pyinstaller
 
-    - name: Clean previous builds
-      run: |
-        rm -rf dist build
-
     - name: Build with PyInstaller
       run: |
-        pyinstaller qr3d.spec --clean --noconfirm
+        pyinstaller qrly.spec --clean --noconfirm
         ls -la dist/
 
-    - name: Create ZIP archive
+    - name: Install create-dmg
       run: |
-        cd dist
-        zip -r QR3DGenerator-${{ needs.create-release.outputs.version }}-macOS.app.zip QR3DGenerator.app
-        cd ..
+        brew install create-dmg
 
-    - name: Upload macOS ZIP
-      uses: actions/upload-release-asset@v1
+    - name: Create DMG installer
+      run: |
+        mkdir -p dist/dmg
+        cp -R dist/Qrly.app dist/dmg/
+
+        # Create a nice DMG with create-dmg
+        # Check if icon exists in the bundle
+        if [ -f "dist/Qrly.app/Contents/Resources/app_icon.icns" ]; then
+          ICON_ARG="--volicon dist/Qrly.app/Contents/Resources/app_icon.icns"
+        else
+          ICON_ARG=""
+        fi
+
+        create-dmg \
+          --volname "Qrly Installer" \
+          $ICON_ARG \
+          --window-pos 200 120 \
+          --window-size 800 400 \
+          --icon-size 100 \
+          --icon "Qrly.app" 200 190 \
+          --hide-extension "Qrly.app" \
+          --app-drop-link 600 185 \
+          --no-internet-enable \
+          "dist/Qrly-${{ needs.create-release.outputs.version }}-macOS.dmg" \
+          "dist/dmg/" || \
+        # Fallback if create-dmg fails
+        hdiutil create -volname "Qrly Installer" -srcfolder dist/dmg -ov -format UDZO \
+          "dist/Qrly-${{ needs.create-release.outputs.version }}-macOS.dmg"
+
+    - name: Upload macOS DMG
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/Qrly-${{ needs.create-release.outputs.version }}-macOS.dmg
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./dist/QR3DGenerator-${{ needs.create-release.outputs.version }}-macOS.app.zip
-        asset_name: QR3DGenerator-${{ needs.create-release.outputs.version }}-macOS.app.zip
-        asset_content_type: application/zip
 
   build-windows:
-    name: Build Windows
+    name: Build Windows with OpenSCAD
     needs: create-release
     runs-on: windows-latest
 
@@ -116,6 +192,28 @@ jobs:
       with:
         python-version: '3.13'
 
+    - name: Download OpenSCAD 2025
+      shell: pwsh
+      run: |
+        Write-Host "Downloading OpenSCAD ${{ env.OPENSCAD_VERSION }} for Windows..."
+
+        # Download from official OpenSCAD releases (adjust URL when 2025 is released)
+        $url = "https://files.openscad.org/snapshots/OpenSCAD-${{ env.OPENSCAD_VERSION }}-x86-64.zip"
+        Invoke-WebRequest -Uri $url -OutFile openscad.zip
+
+        # Extract to openscad_bundle
+        Expand-Archive -Path openscad.zip -DestinationPath openscad_bundle -Force
+
+        # Flatten directory structure if needed
+        $scadDir = Get-ChildItem -Path openscad_bundle -Directory | Select-Object -First 1
+        if ($scadDir) {
+          Move-Item -Path "$($scadDir.FullName)\*" -Destination openscad_bundle -Force
+          Remove-Item -Path $scadDir.FullName -Recurse -Force
+        }
+
+        Remove-Item openscad.zip
+        Write-Host "✓ OpenSCAD extracted to openscad_bundle/"
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -124,28 +222,94 @@ jobs:
 
     - name: Build with PyInstaller
       run: |
-        pyinstaller qr3d.spec --clean --noconfirm
+        pyinstaller qrly.spec --clean --noconfirm
         dir dist\
 
-    - name: Create ZIP archive
+    - name: Install NSIS
       shell: pwsh
       run: |
-        Compress-Archive -Path dist\QR3DGenerator -DestinationPath dist\QR3DGenerator-${{ needs.create-release.outputs.version }}-Windows.zip
+        choco install nsis -y
 
-    - name: Upload Windows ZIP
-      uses: actions/upload-release-asset@v1
+    - name: Create NSIS installer script
+      shell: pwsh
+      run: |
+        $version = "${{ needs.create-release.outputs.version }}"
+        $nsiScript = @"
+        !define APP_NAME "Qrly"
+        !define APP_VERSION "$version"
+        !define PUBLISHER "Qrly Project"
+        !define WEB_SITE "https://github.com/${{ github.repository }}"
+        !define APP_EXE "Qrly.exe"
+
+        Name "`${APP_NAME}"
+        OutFile "dist\Qrly-`${APP_VERSION}-Windows-Setup.exe"
+        InstallDir "`$PROGRAMFILES64\`${APP_NAME}"
+        RequestExecutionLevel admin
+
+        !include "MUI2.nsh"
+
+        !define MUI_ABORTWARNING
+        !define MUI_ICON "`${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico"
+        !define MUI_UNICON "`${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
+
+        !insertmacro MUI_PAGE_WELCOME
+        !insertmacro MUI_PAGE_LICENSE "LICENSE"
+        !insertmacro MUI_PAGE_DIRECTORY
+        !insertmacro MUI_PAGE_INSTFILES
+        !insertmacro MUI_PAGE_FINISH
+
+        !insertmacro MUI_UNPAGE_CONFIRM
+        !insertmacro MUI_UNPAGE_INSTFILES
+
+        !insertmacro MUI_LANGUAGE "English"
+
+        Section "Install"
+          SetOutPath "`$INSTDIR"
+          File /r "dist\Qrly\*.*"
+
+          CreateDirectory "`$SMPROGRAMS\`${APP_NAME}"
+          CreateShortcut "`$SMPROGRAMS\`${APP_NAME}\`${APP_NAME}.lnk" "`$INSTDIR\`${APP_EXE}"
+          CreateShortcut "`$DESKTOP\`${APP_NAME}.lnk" "`$INSTDIR\`${APP_EXE}"
+
+          WriteUninstaller "`$INSTDIR\Uninstall.exe"
+
+          WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}" "DisplayName" "`${APP_NAME}"
+          WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}" "UninstallString" "`$INSTDIR\Uninstall.exe"
+          WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}" "DisplayVersion" "`${APP_VERSION}"
+          WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}" "Publisher" "`${PUBLISHER}"
+          WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}" "URLInfoAbout" "`${WEB_SITE}"
+        SectionEnd
+
+        Section "Uninstall"
+          Delete "`$INSTDIR\Uninstall.exe"
+          RMDir /r "`$INSTDIR"
+
+          Delete "`$SMPROGRAMS\`${APP_NAME}\*.*"
+          RMDir "`$SMPROGRAMS\`${APP_NAME}"
+          Delete "`$DESKTOP\`${APP_NAME}.lnk"
+
+          DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}"
+        SectionEnd
+        "@
+
+        Set-Content -Path "installer.nsi" -Value $nsiScript
+
+    - name: Build installer
+      shell: pwsh
+      run: |
+        & "C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
+
+    - name: Upload Windows Installer
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/Qrly-${{ needs.create-release.outputs.version }}-Windows-Setup.exe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./dist/QR3DGenerator-${{ needs.create-release.outputs.version }}-Windows.zip
-        asset_name: QR3DGenerator-${{ needs.create-release.outputs.version }}-Windows.zip
-        asset_content_type: application/zip
 
   build-linux:
-    name: Build Linux
+    name: Build Linux with OpenSCAD
     needs: create-release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout code
@@ -156,6 +320,33 @@ jobs:
       with:
         python-version: '3.13'
 
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+          libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-cursor0 \
+          libxkbcommon-x11-0 libegl1 libdbus-1-3 libxcb-xfixes0 \
+          fuse libfuse2 file
+
+    - name: Download OpenSCAD 2025
+      run: |
+        echo "Downloading OpenSCAD ${{ env.OPENSCAD_VERSION }} for Linux..."
+
+        # Download from official OpenSCAD releases (adjust URL when 2025 is released)
+        curl -L "https://files.openscad.org/snapshots/OpenSCAD-${{ env.OPENSCAD_VERSION }}-x86_64.AppImage" -o openscad.AppImage || \
+        curl -L "https://files.openscad.org/OpenSCAD-${{ env.OPENSCAD_VERSION }}-x86_64.AppImage" -o openscad.AppImage
+
+        # Extract AppImage contents
+        chmod +x openscad.AppImage
+        ./openscad.AppImage --appimage-extract
+
+        mkdir -p openscad_bundle
+        mv squashfs-root openscad_bundle/openscad
+        rm openscad.AppImage
+
+        echo "✓ OpenSCAD extracted to openscad_bundle/"
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -164,21 +355,47 @@ jobs:
 
     - name: Build with PyInstaller
       run: |
-        pyinstaller qr3d.spec --clean --noconfirm
+        pyinstaller qrly.spec --clean --noconfirm
         ls -la dist/
 
-    - name: Create tarball
+    - name: Download linuxdeploy and appimagetool
       run: |
-        cd dist
-        tar -czf QR3DGenerator-${{ needs.create-release.outputs.version }}-Linux.tar.gz QR3DGenerator/
-        cd ..
+        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+        chmod +x linuxdeploy-x86_64.AppImage appimagetool-x86_64.AppImage
 
-    - name: Upload Linux tarball
-      uses: actions/upload-release-asset@v1
+    - name: Create AppImage
+      run: |
+        mkdir -p AppDir/usr/bin
+        mkdir -p AppDir/usr/share/applications
+        mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+
+        # Copy application files
+        cp -r dist/Qrly/* AppDir/usr/bin/
+
+        # Copy icon if available
+        if [ -f "assets/icons/linux/icon_256x256.png" ]; then
+          cp assets/icons/linux/icon_256x256.png AppDir/usr/share/icons/hicolor/256x256/apps/qrly.png
+        fi
+
+        # Create desktop entry
+        cat > AppDir/usr/share/applications/qrly.desktop <<EOF
+        [Desktop Entry]
+        Type=Application
+        Name=Qrly
+        Comment=QR Code 3D Generator
+        Exec=Qrly
+        Icon=qrly
+        Categories=Graphics;Utility;
+        Terminal=false
+        EOF
+
+        # Make AppImage
+        ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir dist/Qrly-${{ needs.create-release.outputs.version }}-Linux.AppImage
+
+    - name: Upload Linux AppImage
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/Qrly-${{ needs.create-release.outputs.version }}-Linux.AppImage
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./dist/QR3DGenerator-${{ needs.create-release.outputs.version }}-Linux.tar.gz
-        asset_name: QR3DGenerator-${{ needs.create-release.outputs.version }}-Linux.tar.gz
-        asset_content_type: application/gzip

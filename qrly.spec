@@ -1,10 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-PyInstaller spec file for QR Code 3D Generator
-Builds standalone executables for macOS, Windows, and Linux
+PyInstaller spec file for Qrly - QR Code 3D Generator
+Builds standalone executables with bundled OpenSCAD for macOS, Windows, and Linux
 """
 
 import sys
+import os
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 block_cipher = None
@@ -29,10 +30,21 @@ hiddenimports = [
     'qrly.gui.viewer_widget',
 ]
 
+# OpenSCAD binary paths (will be bundled during build)
+# These will be added dynamically by the build script
+openscad_binaries = []
+if os.path.exists('openscad_bundle'):
+    if sys.platform == 'darwin':
+        openscad_binaries = [('openscad_bundle/OpenSCAD.app', 'OpenSCAD.app')]
+    elif sys.platform == 'win32':
+        openscad_binaries = [('openscad_bundle/*', 'openscad')]
+    else:  # Linux
+        openscad_binaries = [('openscad_bundle/*', 'openscad')]
+
 a = Analysis(
     ['src/qrly/app.py'],
     pathex=['src'],
-    binaries=[],
+    binaries=openscad_binaries,
     datas=[
         ('src/qrly/__init__.py', 'qrly'),
         ('src/qrly/generator.py', 'qrly'),
@@ -66,7 +78,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='QR3DGenerator',
+    name='Qrly',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -77,7 +89,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,  # TODO: Add icon file if available
+    icon='assets/icons/app_icon.ico' if sys.platform == 'win32' else 'assets/icons/app_icon.icns',
 )
 
 coll = COLLECT(
@@ -88,21 +100,21 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='QR3DGenerator',
+    name='Qrly',
 )
 
 # macOS: Create .app bundle
 if sys.platform == 'darwin':
     app = BUNDLE(
         coll,
-        name='QR3DGenerator.app',
-        icon=None,  # TODO: Add .icns file if available
-        bundle_identifier='com.qrgen.qrlygenerator',
+        name='Qrly.app',
+        icon='assets/icons/app_icon.icns',
+        bundle_identifier='com.qrly.app',
         info_plist={
-            'CFBundleName': 'QR Code 3D Generator',
-            'CFBundleDisplayName': 'QR Code 3D Generator',
-            'CFBundleVersion': '0.1.0',
-            'CFBundleShortVersionString': '0.1.0',
+            'CFBundleName': 'Qrly',
+            'CFBundleDisplayName': 'Qrly - QR Code 3D Generator',
+            'CFBundleVersion': '0.3.0',
+            'CFBundleShortVersionString': '0.3.0',
             'NSHighResolutionCapable': 'True',
             'LSMinimumSystemVersion': '10.13.0',
         },

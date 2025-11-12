@@ -18,11 +18,33 @@ import tempfile
 
 
 def find_openscad_binary():
-    """Find OpenSCAD binary, checking macOS .app first, then PATH"""
-    # Check for macOS application
-    macos_path = "/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD"
-    if os.path.exists(macos_path):
-        return macos_path
+    """Find OpenSCAD binary, checking bundled, system, then PATH"""
+
+    # Get the base path (for PyInstaller bundled apps)
+    if getattr(sys, 'frozen', False):
+        # Running as compiled executable
+        base_path = sys._MEIPASS
+    else:
+        # Running as script
+        base_path = os.path.dirname(os.path.abspath(__file__))
+
+    # Check for bundled OpenSCAD (PyInstaller bundle)
+    if sys.platform == 'darwin':
+        bundled_path = os.path.join(base_path, 'OpenSCAD.app', 'Contents', 'MacOS', 'OpenSCAD')
+        if os.path.exists(bundled_path):
+            return bundled_path
+        # Check system installation
+        system_path = "/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD"
+        if os.path.exists(system_path):
+            return system_path
+    elif sys.platform == 'win32':
+        bundled_path = os.path.join(base_path, 'openscad', 'openscad.exe')
+        if os.path.exists(bundled_path):
+            return bundled_path
+    else:  # Linux
+        bundled_path = os.path.join(base_path, 'openscad', 'openscad')
+        if os.path.exists(bundled_path):
+            return bundled_path
 
     # Fall back to 'openscad' in PATH
     return 'openscad'
