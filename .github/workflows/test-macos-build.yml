@@ -26,95 +26,34 @@ jobs:
       with:
         python-version: '3.13'
 
-    - name: Download OpenSCAD 2025
-      run: |
-        echo "Downloading OpenSCAD ${{ env.OPENSCAD_VERSION }} for macOS..."
-        curl -L "https://files.openscad.org/snapshots/OpenSCAD-${{ env.OPENSCAD_VERSION }}.dmg" -o openscad.dmg
-
-        echo "DMG downloaded, size:"
-        ls -lh openscad.dmg
-
-        # Mount DMG and extract OpenSCAD.app
-        hdiutil attach openscad.dmg
-        mkdir -p openscad_bundle
-        echo "Copying OpenSCAD.app..."
-        cp -R /Volumes/OpenSCAD/OpenSCAD.app openscad_bundle/
-        hdiutil detach /Volumes/OpenSCAD
-        rm openscad.dmg
-
-        echo "✓ OpenSCAD extracted to openscad_bundle/"
-        ls -la openscad_bundle/
-
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -e .
-        pip install py2app
+        pip install pyinstaller
 
     - name: Clean previous builds
       run: |
         rm -rf dist build
 
-    - name: Build with py2app
+    - name: Build with PyInstaller (without OpenSCAD bundle)
       run: |
-        echo "Starting py2app build..."
-        python setup.py py2app
+        echo "Building Qrly.app without bundled OpenSCAD..."
+        echo "Users will install OpenSCAD separately: brew install openscad"
+        pyinstaller qrly.spec --clean --noconfirm
         echo "Build completed!"
         ls -la dist/
-
-    - name: Bundle OpenSCAD into .app (post-build)
-      run: |
-        if [ ! -d "dist/Qrly.app" ]; then
-          echo "✗ Cannot bundle OpenSCAD - app doesn't exist"
-          exit 1
-        fi
-
-        echo "Copying OpenSCAD.app into Qrly.app bundle..."
-
-        # Create openscad_bundle directory in .app
-        mkdir -p "dist/Qrly.app/Contents/MacOS/openscad_bundle"
-
-        # Copy OpenSCAD.app
-        cp -R openscad_bundle/OpenSCAD.app "dist/Qrly.app/Contents/MacOS/openscad_bundle/"
-
-        echo "✓ OpenSCAD bundled successfully!"
-        ls -la "dist/Qrly.app/Contents/MacOS/openscad_bundle/"
 
     - name: Verify app structure
       run: |
         echo "Verifying Qrly.app structure..."
         ls -la dist/Qrly.app/Contents/
         echo ""
-        echo "Resources directory:"
-        ls -la dist/Qrly.app/Contents/Resources/
-        echo ""
-        echo "MacOS directory:"
+        echo "Checking for executable:"
         ls -la dist/Qrly.app/Contents/MacOS/
-
-    - name: Test OpenSCAD binary
-      run: |
-        echo "Testing if bundled OpenSCAD works..."
-        OPENSCAD_BIN="dist/Qrly.app/Contents/MacOS/openscad_bundle/OpenSCAD.app/Contents/MacOS/OpenSCAD"
-
-        if [ -f "$OPENSCAD_BIN" ]; then
-          echo "✓ OpenSCAD binary found!"
-          ls -lh "$OPENSCAD_BIN"
-
-          # Test if it's executable
-          if [ -x "$OPENSCAD_BIN" ]; then
-            echo "✓ OpenSCAD binary is executable!"
-            "$OPENSCAD_BIN" --version || echo "Version check failed (may be normal)"
-          else
-            echo "✗ OpenSCAD binary is NOT executable!"
-            chmod +x "$OPENSCAD_BIN"
-            echo "Made it executable, testing again..."
-            "$OPENSCAD_BIN" --version || echo "Version check failed (may be normal)"
-          fi
-        else
-          echo "✗ OpenSCAD binary NOT found at expected location!"
-          echo "Searching for OpenSCAD..."
-          find dist/Qrly.app -name "OpenSCAD" -type f
-        fi
+        echo ""
+        echo "Checking for icon:"
+        ls -la dist/Qrly.app/Contents/Resources/ | grep -i icon || echo "No icon found"
 
     - name: Create DMG installer
       run: |
