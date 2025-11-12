@@ -135,35 +135,11 @@ jobs:
     - name: Build with PyInstaller
       run: |
         echo "Building Qrly with PyInstaller BUNDLE (produces dist/Qrly.app)..."
-        echo "Qt frameworks filtered from COLLECT, will be added manually"
+        echo "PyInstaller BUNDLE handles all frameworks automatically"
         echo "OpenSCAD not bundled - users install separately: brew install openscad"
         pyinstaller qrly.spec --clean --noconfirm
         echo "Build completed!"
         ls -la dist/
-
-    - name: Bundle Qt frameworks
-      run: |
-        echo "Adding Qt frameworks to .app bundle (dereferencing symlinks)..."
-
-        # Find PyQt6 Qt6 directory
-        PYQT6_DIR=$(python -c "import PyQt6; import os; print(os.path.join(os.path.dirname(PyQt6.__file__), 'Qt6'))")
-        echo "PyQt6 Qt6 directory: $PYQT6_DIR"
-
-        # Copy required Qt frameworks to Contents/Frameworks/ (BUNDLE structure)
-        echo "Copying QtCore.framework to Contents/Frameworks/..."
-        cp -RL "$PYQT6_DIR/lib/QtCore.framework" dist/Qrly.app/Contents/Frameworks/
-
-        echo "Copying QtWidgets.framework to Contents/Frameworks/..."
-        cp -RL "$PYQT6_DIR/lib/QtWidgets.framework" dist/Qrly.app/Contents/Frameworks/
-
-        echo "Copying QtGui.framework to Contents/Frameworks/..."
-        cp -RL "$PYQT6_DIR/lib/QtGui.framework" dist/Qrly.app/Contents/Frameworks/
-
-        echo "Copying QtDBus.framework to Contents/Frameworks/..."
-        cp -RL "$PYQT6_DIR/lib/QtDBus.framework" dist/Qrly.app/Contents/Frameworks/
-
-        echo "✓ Qt frameworks bundled successfully"
-        ls -la dist/Qrly.app/Contents/Frameworks/ | grep Qt
 
     - name: Install create-dmg
       run: |
