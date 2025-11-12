@@ -177,6 +177,11 @@ jobs:
         # Copy all files from dist/Qrly to Contents/MacOS
         cp -R dist/Qrly/* dist/Qrly.app/Contents/MacOS/
 
+        # Create Frameworks directory and Python symlink (required by PyInstaller)
+        mkdir -p dist/Qrly.app/Contents/Frameworks
+        ln -s ../MacOS/_internal/Python.framework/Versions/3.13/Python dist/Qrly.app/Contents/Frameworks/Python
+        echo "✓ Created Frameworks/Python symlink"
+
         # Copy icon
         if [ -f "assets/icons/app_icon.icns" ]; then
           cp assets/icons/app_icon.icns dist/Qrly.app/Contents/Resources/
