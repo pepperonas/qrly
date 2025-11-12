@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 env:
-  OPENSCAD_VERSION: "2025.11.10"
+  OPENSCAD_VERSION: "2025.01.24"
   APP_VERSION: "0.3.0"
 
 jobs:
@@ -46,12 +46,12 @@ jobs:
         body: |
           ## Qrly - QR Code 3D Generator v${{ steps.get_version.outputs.version }}
 
-          Generate 3D-printable QR code models from URLs or images with **bundled OpenSCAD ${{ env.OPENSCAD_VERSION }}**.
+          Generate 3D-printable QR code models from URLs or images with **bundled OpenSCAD 2025.01.24**.
 
           ### ✨ What's New
 
-          - 🚀 **No external dependencies**: OpenSCAD is bundled with the app
-          - ⚡ **Fast rendering**: OpenSCAD 2025 with fast-csg mode (~1 second per model)
+          - 🚀 **No external dependencies**: OpenSCAD 2025 is bundled with the app
+          - ⚡ **Fast rendering**: OpenSCAD 2025 with fast-csg + Manifold engine (~1 second per model)
           - 📦 **Native installers**: DMG for macOS, EXE installer for Windows, AppImage for Linux
           - 🎯 **Text modes**: Add custom text labels to your QR codes
           - 🔄 **Batch processing**: Generate multiple models from JSON config
@@ -96,7 +96,7 @@ jobs:
 
           ---
 
-          _Built with ❤️ using Python 3.13, PyQt6, and OpenSCAD ${{ env.OPENSCAD_VERSION }}_
+          _Built with ❤️ using Python 3.13, PyQt6, and OpenSCAD 2025.01.24_
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -117,10 +117,8 @@ jobs:
     - name: Download OpenSCAD 2025
       run: |
         echo "Downloading OpenSCAD ${{ env.OPENSCAD_VERSION }} for macOS..."
-        # Download from official OpenSCAD releases (adjust URL when 2025 is released)
-        # For now, using latest snapshot - replace with official release when available
-        curl -L "https://files.openscad.org/snapshots/OpenSCAD-${{ env.OPENSCAD_VERSION }}-arm64.dmg" -o openscad.dmg || \
-        curl -L "https://files.openscad.org/snapshots/OpenSCAD-${{ env.OPENSCAD_VERSION }}-universal.dmg" -o openscad.dmg
+        # Download latest snapshot from files.openscad.org
+        curl -L "https://files.openscad.org/snapshots/OpenSCAD-${{ env.OPENSCAD_VERSION }}.dmg" -o openscad.dmg
 
         # Mount DMG and extract OpenSCAD.app
         hdiutil attach openscad.dmg
@@ -201,18 +199,19 @@ jobs:
       run: |
         Write-Host "Downloading OpenSCAD ${{ env.OPENSCAD_VERSION }} for Windows..."
 
-        # Download from official OpenSCAD releases (adjust URL when 2025 is released)
+        # Download latest snapshot from files.openscad.org
         $url = "https://files.openscad.org/snapshots/OpenSCAD-${{ env.OPENSCAD_VERSION }}-x86-64.zip"
         Invoke-WebRequest -Uri $url -OutFile openscad.zip
 
         # Extract to openscad_bundle
-        Expand-Archive -Path openscad.zip -DestinationPath openscad_bundle -Force
+        Expand-Archive -Path openscad.zip -DestinationPath openscad_temp -Force
 
-        # Flatten directory structure if needed
-        $scadDir = Get-ChildItem -Path openscad_bundle -Directory | Select-Object -First 1
+        # Flatten directory structure (remove OpenSCAD-VERSION directory)
+        New-Item -ItemType Directory -Path openscad_bundle -Force
+        $scadDir = Get-ChildItem -Path openscad_temp -Directory | Select-Object -First 1
         if ($scadDir) {
           Move-Item -Path "$($scadDir.FullName)\*" -Destination openscad_bundle -Force
-          Remove-Item -Path $scadDir.FullName -Recurse -Force
+          Remove-Item -Path openscad_temp -Recurse -Force
         }
 
         Remove-Item openscad.zip
@@ -337,9 +336,18 @@ jobs:
       run: |
         echo "Downloading OpenSCAD ${{ env.OPENSCAD_VERSION }} for Linux..."
 
-        # Download from official OpenSCAD releases (adjust URL when 2025 is released)
-        curl -L "https://files.openscad.org/snapshots/OpenSCAD-${{ env.OPENSCAD_VERSION }}-x86_64.AppImage" -o openscad.AppImage || \
-        curl -L "https://files.openscad.org/OpenSCAD-${{ env.OPENSCAD_VERSION }}-x86_64.AppImage" -o openscad.AppImage
+        # Download latest snapshot from files.openscad.org
+        # Linux AppImage format: OpenSCAD-2025.01.24.ai22854-x86_64.AppImage
+        # We need to find the exact filename with build number
+        APPIMAGE_FILE=$(curl -s https://files.openscad.org/snapshots/ | grep -oP "OpenSCAD-${{ env.OPENSCAD_VERSION }}\.ai\d+-x86_64\.AppImage" | head -1)
+
+        if [ -z "$APPIMAGE_FILE" ]; then
+          echo "Error: Could not find AppImage for version ${{ env.OPENSCAD_VERSION }}"
+          exit 1
+        fi
+
+        echo "Found AppImage: $APPIMAGE_FILE"
+        curl -L "https://files.openscad.org/snapshots/$APPIMAGE_FILE" -o openscad.AppImage
 
         # Extract AppImage contents
         chmod +x openscad.AppImage
