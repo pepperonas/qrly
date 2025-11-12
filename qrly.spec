@@ -100,6 +100,22 @@ a = Analysis(
     noarchive=False,
 )
 
+# Filter out problematic Qt frameworks that cause symlink conflicts on macOS
+# These frameworks have Versions/Current symlinks that PyInstaller can't handle
+if sys.platform == 'darwin':
+    excluded_frameworks = [
+        'Qt3D', 'QtBluetooth', 'QtWebEngine', 'QtWebView', 'QtQml',
+        'QtQuick', 'QtScxml', 'QtSensors', 'QtSerialPort', 'QtSvg',
+        'QtTest', 'QtWebChannel', 'QtWebSockets', 'QtXml', 'QtNetwork',
+        'QtMultimedia', 'QtPositioning', 'QtNfc', 'QtRemoteObjects',
+        'QtHelp', 'QtDesigner', 'QtDBus', 'QtPrintSupport', 'QtSql'
+    ]
+
+    a.binaries = [x for x in a.binaries
+                  if not any(fw in x[0] for fw in excluded_frameworks)]
+    a.datas = [x for x in a.datas
+               if not any(fw in x[0] for fw in excluded_frameworks)]
+
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(
