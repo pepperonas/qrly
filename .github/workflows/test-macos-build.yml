@@ -49,21 +49,26 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -e .
-        pip install pyinstaller
+        pip install py2app
 
     - name: Clean previous builds
       run: |
         rm -rf dist build
 
-    - name: Build with PyInstaller
+    - name: Build with py2app
       run: |
-        echo "Starting PyInstaller build (without OpenSCAD)..."
-        pyinstaller qrly.spec --clean --noconfirm
+        echo "Starting py2app build..."
+        python setup.py py2app
         echo "Build completed!"
         ls -la dist/
 
     - name: Bundle OpenSCAD into .app (post-build)
       run: |
+        if [ ! -d "dist/Qrly.app" ]; then
+          echo "✗ Cannot bundle OpenSCAD - app doesn't exist"
+          exit 1
+        fi
+
         echo "Copying OpenSCAD.app into Qrly.app bundle..."
 
         # Create openscad_bundle directory in .app
@@ -74,6 +79,17 @@ jobs:
 
         echo "✓ OpenSCAD bundled successfully!"
         ls -la "dist/Qrly.app/Contents/MacOS/openscad_bundle/"
+
+    - name: Verify app structure
+      run: |
+        echo "Verifying Qrly.app structure..."
+        ls -la dist/Qrly.app/Contents/
+        echo ""
+        echo "Resources directory:"
+        ls -la dist/Qrly.app/Contents/Resources/
+        echo ""
+        echo "MacOS directory:"
+        ls -la dist/Qrly.app/Contents/MacOS/
 
     - name: Test OpenSCAD binary
       run: |
@@ -96,6 +112,8 @@ jobs:
           fi
         else
           echo "✗ OpenSCAD binary NOT found at expected location!"
+          echo "Searching for OpenSCAD..."
+          find dist/Qrly.app -name "OpenSCAD" -type f
         fi
 
     - name: Create DMG installer
