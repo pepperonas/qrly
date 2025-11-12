@@ -57,24 +57,23 @@ jobs:
 
     - name: Build with PyInstaller
       run: |
-        echo "Starting PyInstaller build..."
+        echo "Starting PyInstaller build (without OpenSCAD)..."
         pyinstaller qrly.spec --clean --noconfirm
         echo "Build completed!"
         ls -la dist/
 
-    - name: Verify Qrly.app structure
+    - name: Bundle OpenSCAD into .app (post-build)
       run: |
-        echo "Checking Qrly.app structure..."
-        ls -la dist/Qrly.app/Contents/
+        echo "Copying OpenSCAD.app into Qrly.app bundle..."
 
-        echo "Checking for bundled OpenSCAD..."
-        if [ -d "dist/Qrly.app/Contents/MacOS/openscad_bundle/OpenSCAD.app" ]; then
-          echo "✓ OpenSCAD.app found in bundle!"
-          ls -la dist/Qrly.app/Contents/MacOS/openscad_bundle/
-        else
-          echo "✗ OpenSCAD.app NOT found in bundle!"
-          find dist/Qrly.app -name "OpenSCAD.app" -o -name "openscad_bundle"
-        fi
+        # Create openscad_bundle directory in .app
+        mkdir -p "dist/Qrly.app/Contents/MacOS/openscad_bundle"
+
+        # Copy OpenSCAD.app
+        cp -R openscad_bundle/OpenSCAD.app "dist/Qrly.app/Contents/MacOS/openscad_bundle/"
+
+        echo "✓ OpenSCAD bundled successfully!"
+        ls -la "dist/Qrly.app/Contents/MacOS/openscad_bundle/"
 
     - name: Test OpenSCAD binary
       run: |

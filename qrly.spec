@@ -30,16 +30,13 @@ hiddenimports = [
     'qrly.gui.viewer_widget',
 ]
 
-# OpenSCAD bundling (as data files, not binaries, to avoid codesign issues)
-# Using Tree() to recursively include all files while preserving structure
-openscad_tree = []
-if os.path.exists('openscad_bundle'):
-    openscad_tree = [Tree('openscad_bundle', prefix='openscad_bundle')]
+# OpenSCAD will be bundled AFTER PyInstaller build to avoid symlink conflicts
+# (PyInstaller has issues with Tree() on macOS frameworks with symlinks)
 
 a = Analysis(
     ['src/qrly/app.py'],
     pathex=['src'],
-    binaries=[],  # No binaries - OpenSCAD is bundled as data
+    binaries=[],
     datas=[
         ('src/qrly/__init__.py', 'qrly'),
         ('src/qrly/generator.py', 'qrly'),
@@ -92,7 +89,6 @@ coll = COLLECT(
     a.binaries,
     a.zipfiles,
     a.datas,
-    *openscad_tree,  # Add OpenSCAD bundle here (not as binary to avoid codesign)
     strip=False,
     upx=True,
     upx_exclude=[],
