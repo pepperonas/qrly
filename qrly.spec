@@ -100,23 +100,6 @@ a = Analysis(
     noarchive=False,
 )
 
-# Filter out problematic Qt frameworks that cause symlink conflicts on macOS
-# ALL Qt frameworks on macOS have Versions/Current symlinks that PyInstaller can't handle
-# Only keep the frameworks we actually need: QtCore, QtWidgets, QtGui
-if sys.platform == 'darwin':
-    required_frameworks = ['QtCore', 'QtWidgets', 'QtGui']
-
-    # Keep only binaries that don't include Qt frameworks, OR that include required ones
-    def should_keep_binary(name):
-        # If it's not a Qt framework, keep it
-        if '.framework' not in name:
-            return True
-        # If it's one of our required frameworks, keep it
-        return any(fw in name for fw in required_frameworks)
-
-    a.binaries = [x for x in a.binaries if should_keep_binary(x[0])]
-    a.datas = [x for x in a.datas if should_keep_binary(x[0])]
-
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(
@@ -149,19 +132,20 @@ coll = COLLECT(
     name='Qrly',
 )
 
-# macOS: Create .app bundle
-if sys.platform == 'darwin':
-    app = BUNDLE(
-        coll,
-        name='Qrly.app',
-        icon='assets/icons/app_icon.icns',
-        bundle_identifier='com.qrly.app',
-        info_plist={
-            'CFBundleName': 'Qrly',
-            'CFBundleDisplayName': 'Qrly - QR Code 3D Generator',
-            'CFBundleVersion': '0.3.0',
-            'CFBundleShortVersionString': '0.3.0',
-            'NSHighResolutionCapable': 'True',
-            'LSMinimumSystemVersion': '10.13.0',
-        },
-    )
+# macOS: .app bundle creation disabled due to PyInstaller symlink issues with Qt frameworks
+# The GitHub Actions workflow will manually create the .app structure instead
+# if sys.platform == 'darwin':
+#     app = BUNDLE(
+#         coll,
+#         name='Qrly.app',
+#         icon='assets/icons/app_icon.icns',
+#         bundle_identifier='com.qrly.app',
+#         info_plist={
+#             'CFBundleName': 'Qrly',
+#             'CFBundleDisplayName': 'Qrly - QR Code 3D Generator',
+#             'CFBundleVersion': '0.3.0',
+#             'CFBundleShortVersionString': '0.3.0',
+#             'NSHighResolutionCapable': 'True',
+#             'LSMinimumSystemVersion': '10.13.0',
+#         },
+#     )

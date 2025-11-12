@@ -38,10 +38,62 @@ jobs:
 
     - name: Build with PyInstaller (without OpenSCAD bundle)
       run: |
-        echo "Building Qrly.app without bundled OpenSCAD..."
+        echo "Building Qrly with PyInstaller (produces dist/Qrly folder)..."
         echo "Users will install OpenSCAD separately: brew install openscad"
         pyinstaller qrly.spec --clean --noconfirm
         echo "Build completed!"
+        ls -la dist/
+
+    - name: Manually create .app bundle
+      run: |
+        echo "Creating Qrly.app structure manually (PyInstaller BUNDLE disabled due to Qt symlink issues)..."
+
+        # Create .app directory structure
+        mkdir -p dist/Qrly.app/Contents/MacOS
+        mkdir -p dist/Qrly.app/Contents/Resources
+
+        # Copy all files from dist/Qrly to Contents/MacOS
+        cp -R dist/Qrly/* dist/Qrly.app/Contents/MacOS/
+
+        # Copy icon
+        if [ -f "assets/icons/app_icon.icns" ]; then
+          cp assets/icons/app_icon.icns dist/Qrly.app/Contents/Resources/
+        fi
+
+        # Create Info.plist
+        cat > dist/Qrly.app/Contents/Info.plist <<EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>CFBundleName</key>
+            <string>Qrly</string>
+            <key>CFBundleDisplayName</key>
+            <string>Qrly - QR Code 3D Generator</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.qrly.app</string>
+            <key>CFBundleVersion</key>
+            <string>0.3.0</string>
+            <key>CFBundleShortVersionString</key>
+            <string>0.3.0</string>
+            <key>CFBundleExecutable</key>
+            <string>Qrly</string>
+            <key>CFBundleIconFile</key>
+            <string>app_icon</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>NSHighResolutionCapable</key>
+            <true/>
+            <key>LSMinimumSystemVersion</key>
+            <string>10.13.0</string>
+        </dict>
+        </plist>
+        EOF
+
+        # Make executable
+        chmod +x dist/Qrly.app/Contents/MacOS/Qrly
+
+        echo "✓ Qrly.app created successfully"
         ls -la dist/
 
     - name: Verify app structure
