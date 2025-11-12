@@ -101,20 +101,21 @@ a = Analysis(
 )
 
 # Filter out problematic Qt frameworks that cause symlink conflicts on macOS
-# These frameworks have Versions/Current symlinks that PyInstaller can't handle
+# ALL Qt frameworks on macOS have Versions/Current symlinks that PyInstaller can't handle
+# Only keep the frameworks we actually need: QtCore, QtWidgets, QtGui
 if sys.platform == 'darwin':
-    excluded_frameworks = [
-        'Qt3D', 'QtBluetooth', 'QtWebEngine', 'QtWebView', 'QtQml',
-        'QtQuick', 'QtScxml', 'QtSensors', 'QtSerialPort', 'QtSvg',
-        'QtTest', 'QtWebChannel', 'QtWebSockets', 'QtXml', 'QtNetwork',
-        'QtMultimedia', 'QtPositioning', 'QtNfc', 'QtRemoteObjects',
-        'QtHelp', 'QtDesigner', 'QtDBus', 'QtPrintSupport', 'QtSql'
-    ]
+    required_frameworks = ['QtCore', 'QtWidgets', 'QtGui']
 
-    a.binaries = [x for x in a.binaries
-                  if not any(fw in x[0] for fw in excluded_frameworks)]
-    a.datas = [x for x in a.datas
-               if not any(fw in x[0] for fw in excluded_frameworks)]
+    # Keep only binaries that don't include Qt frameworks, OR that include required ones
+    def should_keep_binary(name):
+        # If it's not a Qt framework, keep it
+        if '.framework' not in name:
+            return True
+        # If it's one of our required frameworks, keep it
+        return any(fw in name for fw in required_frameworks)
+
+    a.binaries = [x for x in a.binaries if should_keep_binary(x[0])]
+    a.datas = [x for x in a.datas if should_keep_binary(x[0])]
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
