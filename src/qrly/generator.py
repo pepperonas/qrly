@@ -58,10 +58,11 @@ def find_openscad_binary():
 class QRModelGenerator:
     """Generate 3D models from QR code images"""
 
-    def __init__(self, image_path, mode='square', output_dir='.'):
+    def __init__(self, image_path, mode='square', output_dir='.', output_name=None):
         self.image_path = Path(image_path)
         self.mode = mode
         self.output_dir = Path(output_dir)
+        self.output_name = output_name  # Optional: override name derived from image_path
 
         # Design parameters
         self.card_width = 55    # mm - credit card width
@@ -76,12 +77,13 @@ class QRModelGenerator:
         self.hole_from_top = 6  # mm - distance from top to hole center
         self.top_margin = 8     # mm - total top margin for pendant (hole area + margin)
 
-        # Text mode specific (for rectangle-text and pendant-text)
-        self.text_content = ""   # Text to display under QR code
-        self.text_size = 6       # Font size in mm (reduced from 8 to fit 12 chars)
-        self.text_height = 1.0   # Relief height of text (same as QR)
-        self.text_margin = 2     # Distance between QR code and text in mm
-        self.text_rotation = 0   # Rotation in Z-axis (0 or 180 degrees)
+        # Text mode specific (for rectangle-text, pendant-text, and rectangle-text-2x)
+        self.text_content = ""       # Text to display under QR code (or only text for single-text modes)
+        self.text_content_top = ""   # Text to display above QR code (only for rectangle-text-2x)
+        self.text_size = 6           # Font size in mm (reduced from 8 to fit 12 chars)
+        self.text_height = 1.0       # Relief height of text (same as QR)
+        self.text_margin = 2         # Distance between QR code and text in mm
+        self.text_rotation = 0       # Rotation in Z-axis (0 or 180 degrees)
 
     @staticmethod
     def is_url(text):
@@ -93,6 +95,26 @@ class QRModelGenerator:
             r'([/?].*)?$'           # optional path
         )
         return bool(url_pattern.match(text))
+
+    @staticmethod
+    def get_output_name(base_name, card_height=1.25, size_scale=1.0):
+        """Generate output directory name with size/thickness labels"""
+        size_label = "small" if size_scale == 0.5 else "large" if size_scale == 2.0 else "medium"
+        thickness_label = "thin" if card_height <= 0.6 else "thick" if card_height >= 1.4 else "medium"
+        return f"{base_name}-{size_label}-{thickness_label}"
+
+    @staticmethod
+    def get_unique_output_dir(output_base_dir, base_name, card_height=1.25, size_scale=1.0):
+        """Get a unique output directory, adding counter if needed"""
+        final_name = QRModelGenerator.get_output_name(base_name, card_height, size_scale)
+        model_dir = Path(output_base_dir) / final_name
+
+        counter = 1
+        while model_dir.exists() and any(model_dir.iterdir()):  # Skip if exists AND not empty
+            model_dir = Path(output_base_dir) / f"{final_name} ({counter})"
+            counter += 1
+
+        return model_dir
 
     @staticmethod
     def generate_qr_image(data, output_path=None):
@@ -196,9 +218,9 @@ class QRModelGenerator:
     def calculate_dimensions(self, qr_pixels):
         """Calculate model dimensions based on mode"""
         # Calculate dynamic text size if text mode
-        if self.mode in ['rectangle-text', 'pendant-text'] and self.text_content:
+        if self.mode in ['rectangle-text', 'pendant-text', 'rectangle-text-2x']:
             # Determine available width for text based on mode
-            if self.mode == 'rectangle-text':
+            if self.mode in ['rectangle-text', 'rectangle-text-2x']:
                 card_width_for_text = 54 * self.size_scale  # Rectangle mode uses 54mm width (scaled)
             else:  # pendant-text
                 card_width_for_text = self.card_width * self.size_scale  # 55mm (scaled)
@@ -206,13 +228,29 @@ class QRModelGenerator:
             # Calculate available width (card width minus margins and safety buffer)
             available_text_width = card_width_for_text - (2 * self.qr_margin) - 4  # 4mm safety buffer
 
-            # Calculate and set dynamic text size
-            self.text_size = self.calculate_text_size(self.text_content, available_text_width)
+            # Calculate and set dynamic text size for bottom text
+            if self.text_content:
+                self.text_size = self.calculate_text_size(self.text_content, available_text_width)
+            # For rectangle-text-2x, also calculate for top text (use same size for consistency)
+            if self.mode == 'rectangle-text-2x' and self.text_content_top:
+                # Use the max size of both texts to ensure both fit
+                top_size = self.calculate_text_size(self.text_content_top, available_text_width)
+                if self.text_content:
+                    self.text_size = max(self.text_size, top_size)
+                else:
+                    self.text_size = top_size
 
         # Text area height calculation (if text mode)
         text_area_height = 0
+        text_area_height_top = 0
         if self.mode in ['rectangle-text', 'pendant-text'] and self.text_content:
             text_area_height = self.text_size + self.text_margin + self.qr_margin  # text height + spacing + bottom margin
+        elif self.mode == 'rectangle-text-2x':
+            # Calculate space for both top and bottom text
+            if self.text_content:
+                text_area_height = self.text_size + self.text_margin + self.qr_margin  # bottom text
+            if self.text_content_top:
+                text_area_height_top = self.text_size + self.text_margin + self.qr_margin  # top text
 
         # Apply size scale to base card width
         scaled_card_width = self.card_width * self.size_scale
@@ -231,6 +269,15 @@ class QRModelGenerator:
             available_height = available_width  # Keep QR code square
             card_length = 64 * self.size_scale  # Fixed length for rectangle-text (reduced from 74)
             qr_offset_y = self.qr_margin
+
+        elif self.mode == 'rectangle-text-2x':
+            # Rectangle-text-2x mode: Text on top AND bottom
+            card_width = 54 * self.size_scale  # Custom width for rectangle
+            available_width = card_width - (2 * self.qr_margin)
+            available_height = available_width  # Keep QR code square
+            # Total height: top_text_area + QR_height + bottom_text_area
+            card_length = text_area_height_top + available_height + text_area_height
+            qr_offset_y = text_area_height_top  # QR starts after top text
 
         elif self.mode == 'pendant-text':
             # Pendant-text mode: Like pendant but with text area at bottom
@@ -252,6 +299,9 @@ class QRModelGenerator:
 
         # Calculate text position if text mode
         text_offset_y = 0
+        text_offset_y_top = 0
+
+        # Bottom text (for all text modes)
         if self.mode in ['rectangle-text', 'pendant-text'] and self.text_content:
             base_offset = qr_offset_y + (pixel_size * qr_pixels) + self.text_margin
             # If text is rotated 180°, we need to adjust the Y position
@@ -262,16 +312,37 @@ class QRModelGenerator:
             else:
                 text_offset_y = base_offset
 
+        # For rectangle-text-2x: calculate both top and bottom text positions
+        elif self.mode == 'rectangle-text-2x':
+            # Top text (above QR code)
+            if self.text_content_top:
+                # Top text is at the beginning, rotated 180°
+                text_offset_y_top = self.qr_margin + self.text_size  # Add text size because rotated
+
+            # Bottom text (below QR code)
+            if self.text_content:
+                base_offset = qr_offset_y + (pixel_size * qr_pixels) + self.text_margin
+                # Bottom text is also rotated 180°
+                text_offset_y = base_offset + self.text_size
+
+        # Determine card width based on mode
+        card_width_final = scaled_card_width
+        if self.mode in ['rectangle-text', 'rectangle-text-2x']:
+            card_width_final = 54 * self.size_scale
+
         return {
             'card_length': card_length,
-            'card_width': scaled_card_width if self.mode != 'rectangle-text' else (54 * self.size_scale),
+            'card_width': card_width_final,
             'pixel_size': pixel_size,
             'qr_offset_x': self.qr_margin,
             'qr_offset_y': qr_offset_y,
             'qr_size': pixel_size * qr_pixels,
-            'has_text': bool(self.text_content and self.mode in ['rectangle-text', 'pendant-text']),
+            'has_text': bool(self.text_content and self.mode in ['rectangle-text', 'pendant-text', 'rectangle-text-2x']),
+            'has_text_top': bool(self.text_content_top and self.mode == 'rectangle-text-2x'),
             'text_offset_y': text_offset_y,
-            'text_offset_x': (54 * self.size_scale if self.mode == 'rectangle-text' else self.card_width * self.size_scale) / 2  # Center text (scaled)
+            'text_offset_y_top': text_offset_y_top,
+            'text_offset_x': card_width_final / 2,  # Center text (scaled)
+            'text_offset_x_top': card_width_final / 2  # Center top text (scaled)
         }
 
     def generate_openscad(self, matrix, dimensions):
@@ -281,6 +352,7 @@ class QRModelGenerator:
 
         # Escape text for OpenSCAD (replace quotes)
         safe_text = self.text_content.replace('"', '\\"') if self.text_content else ""
+        safe_text_top = self.text_content_top.replace('"', '\\"') if self.text_content_top else ""
 
         scad_code = f"""// QR Code 3D Model
 // Generated from: {self.image_path.name}
@@ -300,7 +372,7 @@ pixel_size = {dimensions['pixel_size']};
 qr_offset_x = {dimensions['qr_offset_x']};
 qr_offset_y = {dimensions['qr_offset_y']};
 
-// Text parameters
+// Text parameters (bottom text)
 has_text = {str(dimensions['has_text']).lower()};
 text_content = "{safe_text}";
 text_size = {self.text_size};
@@ -308,6 +380,13 @@ text_height = {self.text_height};
 text_offset_x = {dimensions['text_offset_x']};
 text_offset_y = {dimensions['text_offset_y']};
 text_rotation = {self.text_rotation};  // Z-axis rotation (0 or 180 degrees)
+
+// Top text parameters (for rectangle-text-2x mode)
+has_text_top = {str(dimensions['has_text_top']).lower()};
+text_content_top = "{safe_text_top}";
+text_offset_x_top = {dimensions['text_offset_x_top']};
+text_offset_y_top = {dimensions['text_offset_y_top']};
+text_rotation_top = 180;  // Top text always rotated 180 degrees
 
 // Helper module for rounded corners (faster than minkowski)
 module rounded_square(width, length, height, radius) {{
@@ -323,13 +402,24 @@ module rounded_square(width, length, height, radius) {{
     }}
 }}
 
-// Text module
+// Text module (bottom text)
 module text_label() {{
     if (has_text) {{
         translate([text_offset_x, text_offset_y, card_height])
         rotate([0, 0, text_rotation])
         linear_extrude(height=text_height)
         text(text_content, size=text_size, font="Liberation Mono:style=Bold",
+             halign="center", valign="bottom", spacing=0.85);
+    }}
+}}
+
+// Text module (top text for rectangle-text-2x)
+module text_label_top() {{
+    if (has_text_top) {{
+        translate([text_offset_x_top, text_offset_y_top, card_height])
+        rotate([0, 0, text_rotation_top])
+        linear_extrude(height=text_height)
+        text(text_content_top, size=text_size, font="Liberation Mono:style=Bold",
              halign="center", valign="bottom", spacing=0.85);
     }}
 }}
@@ -344,7 +434,10 @@ difference() {{
         translate([qr_offset_x, qr_offset_y, card_height])
             qr_pattern();
 
-        // Text label (if enabled)
+        // Top text label (if enabled, for rectangle-text-2x mode)
+        text_label_top();
+
+        // Bottom text label (if enabled)
         text_label();
     }}
 """
@@ -439,6 +532,20 @@ module qr_pattern() {{
                 "rotation_deg": self.text_rotation,
                 "font": "Liberation Mono:style=Bold"
             }
+        elif self.mode == 'rectangle-text-2x':
+            metadata["text"] = {}
+            if self.text_content:
+                metadata["text"]["content_bottom"] = self.text_content
+            if self.text_content_top:
+                metadata["text"]["content_top"] = self.text_content_top
+            if self.text_content or self.text_content_top:
+                metadata["text"].update({
+                    "size_mm": self.text_size,
+                    "height_mm": self.text_height,
+                    "margin_mm": self.text_margin,
+                    "rotation_deg": 180,  # Always 180 for both texts in rectangle-text-2x
+                    "font": "Liberation Mono:style=Bold"
+                })
 
         # Round all float values to 3 decimal places for better readability
         return round_floats(metadata)
@@ -513,15 +620,11 @@ module qr_pattern() {{
         print(f"Processing: {self.image_path.name}")
         print(f"Mode: {self.mode}")
 
-        # Create model-specific subdirectory first
-        base_name = self.image_path.stem  # filename without extension
+        # Get unique output directory
+        base_name = self.output_name or self.image_path.stem  # Use provided name or filename without extension
+        model_dir = self.get_unique_output_dir(self.output_dir, base_name, self.card_height, self.size_scale)
+        final_name = model_dir.name
 
-        # Add size and thickness to base name
-        size_label = "small" if self.size_scale == 0.5 else "large" if self.size_scale == 2.0 else "medium"
-        thickness_label = "thin" if self.card_height <= 0.6 else "thick" if self.card_height >= 1.4 else "medium"
-        base_name = f"{base_name}-{size_label}-{thickness_label}"
-
-        model_dir = self.output_dir / base_name
         model_dir.mkdir(parents=True, exist_ok=True)
         print(f"→ Output directory: {model_dir}")
 
@@ -534,11 +637,11 @@ module qr_pattern() {{
         dimensions = self.calculate_dimensions(width)
         print(f"  Model size: {dimensions['card_width']}x{dimensions['card_length']}x{self.card_height}mm")
 
-        # Determine output filenames (all in model subdirectory)
-        qr_file = model_dir / f"{base_name}.png"
-        scad_file = model_dir / f"{base_name}.scad"
-        stl_file = model_dir / f"{base_name}.stl"
-        json_file = model_dir / f"{base_name}.json"
+        # Determine output filenames (all in model subdirectory, use final_name for consistency)
+        qr_file = model_dir / f"{final_name}.png"
+        scad_file = model_dir / f"{final_name}.scad"
+        stl_file = model_dir / f"{final_name}.stl"
+        json_file = model_dir / f"{final_name}.json"
 
         # Move QR code image to model directory (if it's not already there)
         if self.image_path.parent != model_dir:
@@ -582,12 +685,14 @@ Examples:
     )
 
     parser.add_argument('input', type=str, help='QR code image file (PNG/JPG) or URL to encode')
-    parser.add_argument('--mode', type=str, choices=['square', 'pendant', 'rectangle-text', 'pendant-text'], default='square',
-                        help='Model type: square (default), pendant (with hole), rectangle-text (54x74mm with text), pendant-text (pendant with text)')
+    parser.add_argument('--mode', type=str, choices=['square', 'pendant', 'rectangle-text', 'pendant-text', 'rectangle-text-2x'], default='square',
+                        help='Model type: square (default), pendant (with hole), rectangle-text (with text bottom), pendant-text (pendant with text), rectangle-text-2x (text top AND bottom)')
     parser.add_argument('--text', '-t', type=str, default='',
-                        help='Text to display under QR code (max 12 characters, only for *-text modes)')
+                        help='Text to display under QR code (max 20 characters, for *-text modes)')
+    parser.add_argument('--text-top', type=str, default='',
+                        help='Text to display above QR code (max 20 characters, only for rectangle-text-2x mode)')
     parser.add_argument('--text-rotation', type=int, choices=[0, 180], default=0,
-                        help='Rotate text 180 degrees in Z-axis (default: 0, automatic for pendant-text mode)')
+                        help='Rotate text 180 degrees in Z-axis (default: 0, automatic for pendant-text mode, always 180 for rectangle-text-2x)')
     parser.add_argument('--output', '-o', type=str, default=str(DEFAULT_OUTPUT_DIR),
                         help=f'Output directory for generated files (default: {DEFAULT_OUTPUT_DIR})')
     parser.add_argument('--name', '-n', type=str, default=None,
@@ -603,48 +708,56 @@ Examples:
     input_path = args.input
     temp_file = None
 
+    # Determine output name
+    output_name = None
+    if args.name:
+        output_name = args.name
+    elif QRModelGenerator.is_url(args.input):
+        # Create safe filename from URL
+        output_name = re.sub(r'[^\w\-]', '_', args.input)[:50]
+
     if QRModelGenerator.is_url(args.input):
-        # Generate QR code from URL
+        # Generate QR code from URL - save to temp location
         print(f"📡 Generating QR code from URL: {args.input}")
 
-        # Determine output name
-        if args.name:
-            base_name = args.name
-        else:
-            # Create safe filename from URL
-            base_name = re.sub(r'[^\w\-]', '_', args.input)[:50]
-
-        # Create model subdirectory and generate QR there
-        model_dir = output_dir / base_name
-        model_dir.mkdir(parents=True, exist_ok=True)
-
-        qr_path = model_dir / f"{base_name}.png"
-        QRModelGenerator.generate_qr_image(args.input, qr_path)
-        print(f"✓ QR code saved: {qr_path}")
-        input_path = str(qr_path)
+        # Generate QR to temporary file (generate() will handle final placement)
+        input_path = QRModelGenerator.generate_qr_image(args.input)
+        print(f"✓ QR code generated")
+        temp_file = input_path
     else:
         # Validate file exists
         if not os.path.exists(args.input):
             print(f"❌ Error: Image file not found: {args.input}")
             sys.exit(1)
 
-    # Validate text parameter
+    # Validate text parameters
     text_content = args.text.strip()
-    if text_content and len(text_content) > 12:
-        print(f"❌ Error: Text too long ({len(text_content)} characters). Maximum is 12 characters.")
+    text_content_top = args.text_top.strip()
+
+    if text_content and len(text_content) > 20:
+        print(f"❌ Error: Text too long ({len(text_content)} characters). Maximum is 20 characters.")
         sys.exit(1)
 
-    if text_content and args.mode not in ['rectangle-text', 'pendant-text']:
-        print(f"⚠️  Warning: Text parameter ignored for mode '{args.mode}'. Use 'rectangle-text' or 'pendant-text' mode for text.")
+    if text_content_top and len(text_content_top) > 20:
+        print(f"❌ Error: Top text too long ({len(text_content_top)} characters). Maximum is 20 characters.")
+        sys.exit(1)
+
+    # Validate text mode compatibility
+    if text_content and args.mode not in ['rectangle-text', 'pendant-text', 'rectangle-text-2x']:
+        print(f"⚠️  Warning: Text parameter ignored for mode '{args.mode}'. Use text modes for text.")
+
+    if text_content_top and args.mode != 'rectangle-text-2x':
+        print(f"⚠️  Warning: Top text parameter ignored for mode '{args.mode}'. Only 'rectangle-text-2x' mode supports top text.")
 
     # Generate model
     try:
-        generator = QRModelGenerator(input_path, args.mode, str(output_dir))
+        generator = QRModelGenerator(input_path, args.mode, str(output_dir), output_name=output_name)
         generator.text_content = text_content
+        generator.text_content_top = text_content_top
 
-        # Set text rotation (automatic for pendant-text, user choice for rectangle-text)
-        if args.mode == 'pendant-text':
-            generator.text_rotation = 180  # Always rotated for pendant mode
+        # Set text rotation (automatic for pendant-text and rectangle-text-2x)
+        if args.mode in ['pendant-text', 'rectangle-text-2x']:
+            generator.text_rotation = 180  # Always rotated for these modes
         else:
             generator.text_rotation = args.text_rotation
 

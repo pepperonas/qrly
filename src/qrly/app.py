@@ -30,7 +30,7 @@ class GeneratorThread(QThread):
     progress = pyqtSignal(str)
     finished = pyqtSignal(bool, str, str)  # success, stl_path, message
 
-    def __init__(self, input_path, output_name, mode, params, text_content='', text_rotation=0):
+    def __init__(self, input_path, output_name, mode, params, text_content='', text_rotation=0, text_content_top=''):
         super().__init__()
         self.input_path = input_path
         self.output_name = output_name
@@ -38,6 +38,7 @@ class GeneratorThread(QThread):
         self.params = params
         self.text_content = text_content
         self.text_rotation = text_rotation
+        self.text_content_top = text_content_top
 
     def run(self):
         try:
@@ -46,25 +47,20 @@ class GeneratorThread(QThread):
             temp_qr_file = None
 
             if QRModelGenerator.is_url(self.input_path):
-                # Generate QR code from URL
+                # Generate QR code from URL - save to temp location
                 self.progress.emit(f"Generating QR code from URL...")
 
-                # Create model subdirectory and generate QR code there
-                model_dir = DEFAULT_OUTPUT_DIR / self.output_name
-                model_dir.mkdir(parents=True, exist_ok=True)
-
-                qr_path = model_dir / f"{self.output_name}.png"
-
-                QRModelGenerator.generate_qr_image(self.input_path, qr_path)
-                actual_input = str(qr_path)
-                self.progress.emit(f"QR code created: {qr_path}")
+                # Generate QR to temporary file (generate() will handle final placement)
+                actual_input = QRModelGenerator.generate_qr_image(self.input_path)
+                self.progress.emit(f"QR code created")
 
             self.progress.emit("Generating 3D model...")
 
             generator = QRModelGenerator(
                 actual_input,
                 self.mode,
-                str(DEFAULT_OUTPUT_DIR)
+                str(DEFAULT_OUTPUT_DIR),
+                output_name=self.output_name
             )
 
             # Apply custom parameters
@@ -74,6 +70,7 @@ class GeneratorThread(QThread):
             generator.corner_radius = self.params['corner_radius']
             generator.size_scale = self.params['size_scale']
             generator.text_content = self.text_content
+            generator.text_content_top = self.text_content_top
             generator.text_rotation = self.text_rotation
             # Sync text relief with QR relief (always same height)
             generator.text_height = self.params['relief']
@@ -137,16 +134,11 @@ class BatchGeneratorThread(QThread):
                     if QRModelGenerator.is_url(url):
                         self.progress.emit(f"Generating QR code from URL...")
 
-                        # Create model subdirectory and generate QR code there
-                        model_dir = DEFAULT_OUTPUT_DIR / name
-                        model_dir.mkdir(parents=True, exist_ok=True)
-
-                        qr_path = model_dir / f"{name}.png"
-                        QRModelGenerator.generate_qr_image(url, qr_path)
-                        actual_input = str(qr_path)
+                        # Generate QR to temporary file (generate() will handle final placement)
+                        actual_input = QRModelGenerator.generate_qr_image(url)
 
                     # Create generator
-                    generator = QRModelGenerator(actual_input, mode, str(DEFAULT_OUTPUT_DIR))
+                    generator = QRModelGenerator(actual_input, mode, str(DEFAULT_OUTPUT_DIR), output_name=name)
 
                     # Apply global parameters (with model-specific overrides)
                     generator.card_height = model_config.get('card_height', global_params.get('card_height', 1.25))
@@ -258,7 +250,8 @@ class SimpleMainWindow(QMainWindow):
             "Square",
             "Pendant (with hole)",
             "Rectangle + Text",
-            "Pendant + Text"
+            "Pendant + Text",
+            "Rectangle + Text (2x)"
         ])
         self.mode_combo.currentIndexChanged.connect(self.on_mode_changed)
         mode_layout.addWidget(self.mode_combo)
@@ -268,26 +261,33 @@ class SimpleMainWindow(QMainWindow):
         self.size_label.setStyleSheet("color: #666; font-size: 11px; padding: 2px 0px;")
         mode_layout.addWidget(self.size_label)
 
-        # Text input (only visible for text modes)
+        # Text input for top text (only visible for rectangle-text-2x)
+        text_top_layout = QHBoxLayout()
+        text_top_layout.addWidget(QLabel("Text Top:"))
+        self.text_field_top = QLineEdit()
+        self.text_field_top.setPlaceholderText("Enter top text (max 20 chars)")
+        self.text_field_top.setMaxLength(20)
+        text_top_layout.addWidget(self.text_field_top)
+        mode_layout.addLayout(text_top_layout)
+
+        # Text input for bottom text (visible for all text modes)
         text_layout = QHBoxLayout()
-        text_layout.addWidget(QLabel("Text:"))
+        text_layout.addWidget(QLabel("Text Bottom:"))
         self.text_field = QLineEdit()
         self.text_field.setPlaceholderText("Enter text (max 20 chars)")
         self.text_field.setMaxLength(20)
         text_layout.addWidget(self.text_field)
         mode_layout.addLayout(text_layout)
 
-        # Text rotation checkbox (only visible for Rectangle+Text mode)
-        self.text_rotation_checkbox = QCheckBox("Rotate text 180° (upside down)")
-        mode_layout.addWidget(self.text_rotation_checkbox)
-
         # Store text widgets for show/hide
+        self.text_label_top = text_top_layout.itemAt(0).widget()
         self.text_label = text_layout.itemAt(0).widget()
 
-        # Initially hide text field and rotation checkbox (square mode is default)
+        # Initially hide text fields (square mode is default)
+        self.text_label_top.setVisible(False)
+        self.text_field_top.setVisible(False)
         self.text_label.setVisible(False)
         self.text_field.setVisible(False)
-        self.text_rotation_checkbox.setVisible(False)
 
         # Size presets
         size_preset_layout = QHBoxLayout()
@@ -577,20 +577,18 @@ class SimpleMainWindow(QMainWindow):
                 self.name_field.setText(name)
 
     def on_mode_changed(self, index):
-        """Show/hide text field and rotation checkbox based on selected mode"""
-        # Text modes are indices 2 and 3
+        """Show/hide text fields based on selected mode"""
+        # Text modes: 2=rectangle-text, 3=pendant-text, 4=rectangle-text-2x
         is_text_mode = index >= 2
+        is_text_2x_mode = index == 4  # rectangle-text-2x
+
+        # Show bottom text field for all text modes
         self.text_label.setVisible(is_text_mode)
         self.text_field.setVisible(is_text_mode)
 
-        # Rotation checkbox only visible for Rectangle+Text (index 2)
-        # Pendant+Text (index 3) always uses 180° rotation automatically
-        is_rectangle_text = index == 2
-        self.text_rotation_checkbox.setVisible(is_rectangle_text)
-
-        # Auto-check rotation checkbox for Rectangle+Text mode
-        if is_rectangle_text:
-            self.text_rotation_checkbox.setChecked(True)
+        # Show top text field only for rectangle-text-2x
+        self.text_label_top.setVisible(is_text_2x_mode)
+        self.text_field_top.setVisible(is_text_2x_mode)
 
         # Update relief label based on mode
         if is_text_mode:
@@ -633,6 +631,10 @@ class SimpleMainWindow(QMainWindow):
             width = 55 * scale
             length = 65 * scale  # Approximate
             size_text = f"Size: {width:.1f} x {length:.1f} mm"
+        elif mode_index == 4:  # Rectangle + Text (2x)
+            width = 54 * scale
+            length = 74 * scale  # Approximate (with text top and bottom)
+            size_text = f"Size: {width:.1f} x {length:.1f} mm"
         else:
             size_text = ""
 
@@ -663,25 +665,29 @@ class SimpleMainWindow(QMainWindow):
             0: 'square',
             1: 'pendant',
             2: 'rectangle-text',
-            3: 'pendant-text'
+            3: 'pendant-text',
+            4: 'rectangle-text-2x'
         }
         mode = mode_map.get(mode_index, 'square')
 
         # Get text content (for text modes)
         text_content = self.text_field.text().strip() if mode_index >= 2 else ''
+        text_content_top = self.text_field_top.text().strip() if mode_index == 4 else ''
 
         # Validate text for text modes
-        if mode_index >= 2 and not text_content:
+        if mode_index in [2, 3] and not text_content:
             QMessageBox.warning(self, "Text Required", "Please enter text for the text-mode model.")
             return
 
+        # For rectangle-text-2x, require at least one text field
+        if mode_index == 4 and not text_content and not text_content_top:
+            QMessageBox.warning(self, "Text Required", "Please enter at least one text (top or bottom) for rectangle-text-2x mode.")
+            return
+
         # Get text rotation
-        # Pendant+Text: always 180° (automatic)
-        # Rectangle+Text: user choice via checkbox
-        if mode_index == 3:  # pendant-text
+        # All text modes always use 180° rotation
+        if mode_index >= 2:  # All text modes
             text_rotation = 180
-        elif mode_index == 2:  # rectangle-text
-            text_rotation = 180 if self.text_rotation_checkbox.isChecked() else 0
         else:
             text_rotation = 0
 
@@ -700,7 +706,7 @@ class SimpleMainWindow(QMainWindow):
         self.progress_bar.setRange(0, 0)  # Indeterminate
         self.status_label.setText("Starting generation...")
 
-        self.generator_thread = GeneratorThread(input_text, output_name, mode, params, text_content, text_rotation)
+        self.generator_thread = GeneratorThread(input_text, output_name, mode, params, text_content, text_rotation, text_content_top)
         self.generator_thread.progress.connect(self.on_progress)
         self.generator_thread.finished.connect(self.on_generation_finished)
         self.generator_thread.start()
@@ -757,8 +763,9 @@ class SimpleMainWindow(QMainWindow):
 <ul>
 <li><b>Square:</b> Square model (55x55mm)</li>
 <li><b>Pendant (with hole):</b> With hole for keychain</li>
-<li><b>Rectangle + Text:</b> Rectangular with text field</li>
-<li><b>Pendant + Text:</b> With hole and text field</li>
+<li><b>Rectangle + Text:</b> Rectangular with text field (bottom)</li>
+<li><b>Pendant + Text:</b> With hole and text field (bottom)</li>
+<li><b>Rectangle + Text (2x):</b> Rectangular with text top AND bottom</li>
 </ul>
 
 <h3>Size:</h3>
@@ -1004,8 +1011,7 @@ class SimpleMainWindow(QMainWindow):
         if text_data:
             if 'content' in text_data:
                 self.text_field.setText(text_data['content'])
-            if 'rotation_deg' in text_data:
-                self.text_rotation_checkbox.setChecked(text_data['rotation_deg'] == 180)
+            # Note: rotation is now always 180° for text modes, no checkbox needed
 
         # Load size scale (if available in newer JSON files)
         # For older files, try to infer from card_width
