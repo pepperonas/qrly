@@ -30,9 +30,9 @@ def test_generator_initialization():
 
         # Check default parameters
         assert generator.card_width == 55
-        assert generator.card_height == 1.25
+        assert generator.card_height == 0.5  # Default: dünn (thin)
         assert generator.qr_margin == 2.0  # Current default
-        assert generator.qr_relief == 1.0
+        assert generator.qr_relief == 0.5  # Default: dünn (thin)
         assert generator.corner_radius == 2
         assert generator.mode == "square"
     finally:
