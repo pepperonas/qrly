@@ -11,6 +11,7 @@ APP = ['src/qrly/app.py']
 DATA_FILES = []
 OPTIONS = {
     'argv_emulation': False,
+    'semi_standalone': True,  # Don't bundle Python framework, use system Python
     'plist': {
         'CFBundleName': 'Qrly',
         'CFBundleDisplayName': 'Qrly - QR Code 3D Generator',
@@ -22,7 +23,7 @@ OPTIONS = {
     },
     'packages': ['PyQt6', 'PIL', 'qrcode', 'qrly'],
     'includes': ['PyQt6.QtCore', 'PyQt6.QtWidgets', 'PyQt6.QtGui'],
-    'excludes': ['matplotlib', 'numpy', 'pandas', 'scipy', 'pyvista', 'pyvistaqt', 'vtk', 'vtkmodules', 'test'],
+    'excludes': ['matplotlib', 'numpy', 'pandas', 'scipy', 'pyvista', 'pyvistaqt', 'vtk', 'vtkmodules', 'test', 'tkinter', 'Tkinter'],
 }
 
 if icon_file:
