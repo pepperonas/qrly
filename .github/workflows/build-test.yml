@@ -96,6 +96,7 @@ jobs:
         pip install pyinstaller
 
     - name: Clean previous builds
+      shell: bash
       run: |
         rm -rf dist build
 
@@ -120,8 +121,8 @@ jobs:
     - name: Verify build output (macOS)
       if: runner.os == 'macOS'
       run: |
-        test -d dist/Qrly.app || exit 1
-        echo "macOS .app bundle created successfully"
+        test -f dist/Qrly/Qrly || exit 1
+        echo "macOS executable created successfully"
 
     - name: Verify build output (Linux)
       if: runner.os == 'Linux'
