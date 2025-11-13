@@ -990,7 +990,8 @@ class SimpleMainWindow(QMainWindow):
                 'square': 0,
                 'pendant': 1,
                 'rectangle-text': 2,
-                'pendant-text': 3
+                'pendant-text': 3,
+                'rectangle-text-2x': 4
             }
             if config['mode'] in mode_map:
                 self.mode_combo.setCurrentIndex(mode_map[config['mode']])
@@ -1009,8 +1010,14 @@ class SimpleMainWindow(QMainWindow):
         # Load text settings (if text mode)
         text_data = config.get('text', {})
         if text_data:
+            # Load bottom text (or single text content)
             if 'content' in text_data:
                 self.text_field.setText(text_data['content'])
+            elif 'content_bottom' in text_data:
+                self.text_field.setText(text_data['content_bottom'])
+            # Load top text (for rectangle-text-2x mode)
+            if 'content_top' in text_data:
+                self.text_field_top.setText(text_data['content_top'])
             # Note: rotation is now always 180° for text modes, no checkbox needed
 
         # Load size scale (if available in newer JSON files)

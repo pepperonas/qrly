@@ -82,7 +82,7 @@ class QRModelGenerator:
         self.text_content_top = ""   # Text to display above QR code (only for rectangle-text-2x)
         self.text_size = 6           # Font size in mm (reduced from 8 to fit 12 chars)
         self.text_height = 1.0       # Relief height of text (same as QR)
-        self.text_margin = 2         # Distance between QR code and text in mm
+        self.text_margin = 2         # Distance between QR code and text in mm (base value, will be scaled)
         self.text_rotation = 0       # Rotation in Z-axis (0 or 180 degrees)
 
     @staticmethod
@@ -207,9 +207,9 @@ class QRModelGenerator:
         # => text_size <= available_width / (len(text) * char_width_factor)
         max_text_size = available_width / (len(text) * char_width_factor)
 
-        # Constrain to reasonable limits
-        min_size = 3.0  # Minimum readable size
-        max_size = 6.0  # Maximum size (current default)
+        # Constrain to reasonable limits (scaled with size_scale)
+        min_size = 3.0  # Minimum readable size (absolute minimum, not scaled)
+        max_size = 6.0 * self.size_scale  # Maximum size scaled with model size
 
         text_size = max(min_size, min(max_text_size, max_size))
 
@@ -217,6 +217,10 @@ class QRModelGenerator:
 
     def calculate_dimensions(self, qr_pixels):
         """Calculate model dimensions based on mode"""
+        # Scale text margin with size_scale (store for later use in metadata)
+        scaled_text_margin = self.text_margin * self.size_scale
+        self._scaled_text_margin = scaled_text_margin  # Store for metadata generation
+
         # Calculate dynamic text size if text mode
         if self.mode in ['rectangle-text', 'pendant-text', 'rectangle-text-2x']:
             # Determine available width for text based on mode
@@ -226,7 +230,8 @@ class QRModelGenerator:
                 card_width_for_text = self.card_width * self.size_scale  # 55mm (scaled)
 
             # Calculate available width (card width minus margins and safety buffer)
-            available_text_width = card_width_for_text - (2 * self.qr_margin) - 4  # 4mm safety buffer
+            safety_buffer = 4 * self.size_scale  # Safety buffer scales with model size
+            available_text_width = card_width_for_text - (2 * self.qr_margin) - safety_buffer
 
             # Calculate and set dynamic text size for bottom text
             if self.text_content:
@@ -244,13 +249,13 @@ class QRModelGenerator:
         text_area_height = 0
         text_area_height_top = 0
         if self.mode in ['rectangle-text', 'pendant-text'] and self.text_content:
-            text_area_height = self.text_size + self.text_margin + self.qr_margin  # text height + spacing + bottom margin
+            text_area_height = self.text_size + scaled_text_margin + self.qr_margin  # text height + spacing + bottom margin
         elif self.mode == 'rectangle-text-2x':
             # Calculate space for both top and bottom text
             if self.text_content:
-                text_area_height = self.text_size + self.text_margin + self.qr_margin  # bottom text
+                text_area_height = self.text_size + scaled_text_margin + self.qr_margin  # bottom text
             if self.text_content_top:
-                text_area_height_top = self.text_size + self.text_margin + self.qr_margin  # top text
+                text_area_height_top = self.text_size + scaled_text_margin + self.qr_margin  # top text
 
         # Apply size scale to base card width
         scaled_card_width = self.card_width * self.size_scale
@@ -303,7 +308,7 @@ class QRModelGenerator:
 
         # Bottom text (for all text modes)
         if self.mode in ['rectangle-text', 'pendant-text'] and self.text_content:
-            base_offset = qr_offset_y + (pixel_size * qr_pixels) + self.text_margin
+            base_offset = qr_offset_y + (pixel_size * qr_pixels) + scaled_text_margin
             # If text is rotated 180°, we need to adjust the Y position
             # When rotated, the text grows upward from the anchor point instead of downward
             if self.text_rotation == 180:
@@ -321,7 +326,7 @@ class QRModelGenerator:
 
             # Bottom text (below QR code)
             if self.text_content:
-                base_offset = qr_offset_y + (pixel_size * qr_pixels) + self.text_margin
+                base_offset = qr_offset_y + (pixel_size * qr_pixels) + scaled_text_margin
                 # Bottom text is also rotated 180°
                 text_offset_y = base_offset + self.text_size
 
@@ -528,7 +533,7 @@ module qr_pattern() {{
                 "content": self.text_content,
                 "size_mm": self.text_size,
                 "height_mm": self.text_height,
-                "margin_mm": self.text_margin,
+                "margin_mm": self._scaled_text_margin,  # Use scaled value
                 "rotation_deg": self.text_rotation,
                 "font": "Liberation Mono:style=Bold"
             }
@@ -542,7 +547,7 @@ module qr_pattern() {{
                 metadata["text"].update({
                     "size_mm": self.text_size,
                     "height_mm": self.text_height,
-                    "margin_mm": self.text_margin,
+                    "margin_mm": self._scaled_text_margin,  # Use scaled value
                     "rotation_deg": 180,  # Always 180 for both texts in rectangle-text-2x
                     "font": "Liberation Mono:style=Bold"
                 })
