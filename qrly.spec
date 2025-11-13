@@ -151,8 +151,8 @@ if sys.platform == 'darwin':
         info_plist={
             'CFBundleName': 'Qrly',
             'CFBundleDisplayName': 'Qrly - QR Code 3D Generator',
-            'CFBundleVersion': '0.3.0',
-            'CFBundleShortVersionString': '0.3.0',
+            'CFBundleVersion': '0.3.1',
+            'CFBundleShortVersionString': '0.3.1',
             'NSHighResolutionCapable': 'True',
             'LSMinimumSystemVersion': '10.13.0',
         },
