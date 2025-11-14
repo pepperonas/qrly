@@ -5,6 +5,40 @@ All notable changes to the QR Code 3D Model Generator project will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-11-14
+
+### Added
+- **🗺️ Google Review QR Codes**: Simple Place ID workflow for generating direct Google Business review links
+  - New `google_review.py` module with Place ID validation
+  - `--place-id` CLI argument for direct Place ID input
+  - GUI: Place ID input field with help button
+  - Batch processing support for Place IDs
+  - `CELOX_IO_ANLEITUNG.md`: Complete guide for obtaining Place IDs without API
+
+### Changed
+- **Simplified Google Maps Integration**: Removed complex URL parsing
+  - Only accepts Place IDs (ChIJ... or EI...)
+  - No automatic URL parsing (reduces complexity and improves reliability)
+  - Clear error messages with instructions on obtaining Place IDs
+- **Clean Architecture**: Removed unused Google Maps modules
+  - Deleted `google_maps_utils.py` (complex URL parser)
+  - Deleted `google_review_qr.py` (complex integration layer)
+  - Deleted `test_google_maps.py` (obsolete tests)
+  - Deleted `GOOGLE_REVIEW_WORKFLOW.md` and `WORKFLOW_OHNE_API.md` (consolidated into `CELOX_IO_ANLEITUNG.md`)
+
+### Improved
+- More reliable review link generation (Place IDs always work)
+- Simpler user workflow (get Place ID, paste, done)
+- Better error messages with actionable instructions
+- Cleaner codebase (removed ~1500 lines of complex parsing code)
+
+### Documentation
+- Updated README with simplified Google Review section
+- Added three methods for obtaining Place IDs (Official Finder, Browser Inspector, Business Dashboard)
+- Created `CELOX_IO_ANLEITUNG.md` with step-by-step German instructions
+
+---
+
 ## [0.1.0] - 2025-11-11
 
 ### Changed - BREAKING: Project Reorganization

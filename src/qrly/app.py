@@ -117,17 +117,32 @@ class BatchGeneratorThread(QThread):
             for idx, model_config in enumerate(models, 1):
                 try:
                     # Validate required fields
-                    if 'name' not in model_config or 'url' not in model_config or 'mode' not in model_config:
+                    if 'name' not in model_config or ('url' not in model_config and 'place_id' not in model_config) or 'mode' not in model_config:
                         failed_models.append(f"{model_config.get('name', f'Model {idx}')} (missing required fields)")
-                        self.progress.emit(f"⚠️ Skipping model {idx}/{total}: Missing required fields")
+                        self.progress.emit(f"⚠️ Skipping model {idx}/{total}: Missing required fields (name, url/place_id, mode)")
                         continue
 
                     name = model_config['name']
-                    url = model_config['url']
+                    url = model_config.get('url')
+                    place_id = model_config.get('place_id')
                     mode = model_config['mode']
 
                     self.model_progress.emit(idx, total, name)
                     self.progress.emit(f"Processing {idx}/{total}: {name}")
+
+                    # Google Review Processing (Place ID only)
+                    if place_id:
+                        from .google_review import is_valid_place_id, generate_review_url
+
+                        self.progress.emit(f"🗺️  Processing Place ID for {name}...")
+
+                        if not is_valid_place_id(place_id):
+                            self.progress.emit(f"⚠️  Invalid Place ID for {name}: {place_id}")
+                            failed_models.append(f"{name} (invalid Place ID)")
+                            continue
+
+                        url = generate_review_url(place_id)
+                        self.progress.emit(f"✅ Review link generated for {name}")
 
                     # Check if input is a URL
                     actual_input = url
@@ -240,6 +255,27 @@ class SimpleMainWindow(QMainWindow):
         from PyQt6.QtWidgets import QSizePolicy
         input_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         layout.addWidget(input_group)
+
+        # Google Review Options (Place ID)
+        google_group = QGroupBox("🗺️  Google Review (Optional)")
+        google_layout = QVBoxLayout()
+
+        # Place ID input
+        place_id_label = QLabel("Google Place ID:")
+        google_layout.addWidget(place_id_label)
+
+        self.place_id_input = QLineEdit()
+        self.place_id_input.setPlaceholderText("ChIJ... (Leave empty for regular QR code)")
+        google_layout.addWidget(self.place_id_input)
+
+        # Help button
+        help_btn = QPushButton("❓ How to get Place ID")
+        help_btn.clicked.connect(self.show_place_id_help)
+        help_btn.setStyleSheet("background-color: #4CAF50; color: white; padding: 5px;")
+        google_layout.addWidget(help_btn)
+
+        google_group.setLayout(google_layout)
+        layout.addWidget(google_group)
 
         # Mode selection
         mode_group = QGroupBox("Model Type")
@@ -640,12 +676,67 @@ class SimpleMainWindow(QMainWindow):
 
         self.size_label.setText(size_text)
 
+    def show_place_id_help(self):
+        """Show help dialog for getting Place ID"""
+        from PyQt6.QtWidgets import QMessageBox
+
+        help_text = """<h3>How to get a Google Place ID:</h3>
+
+<ol>
+<li><b>Visit Place ID Finder:</b><br>
+<a href="https://developers.google.com/maps/documentation/places/web-service/place-id">https://developers.google.com/maps/documentation/places/web-service/place-id</a></li>
+
+<li><b>Scroll down</b> to the "Place ID Finder" widget</li>
+
+<li><b>Search</b> for your business name (e.g., "celox.io Berlin")</li>
+
+<li><b>Select</b> your business from suggestions</li>
+
+<li><b>Copy</b> the Place ID (starts with ChIJ)</li>
+
+<li><b>Paste</b> it into the field above</li>
+</ol>
+
+<p><b>The Place ID should look like:</b><br>
+<code>ChIJp4JiUCNP0xQR1JaSjpW_Hms</code></p>
+
+<p><i>See CELOX_IO_ANLEITUNG.md for detailed instructions</i></p>
+"""
+
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Get Google Place ID")
+        msg.setTextFormat(Qt.TextFormat.RichText)
+        msg.setText(help_text)
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.exec()
+
     def generate_model(self):
         """Start model generation in background thread"""
         input_text = self.input_field.text().strip()
-        if not input_text:
-            QMessageBox.warning(self, "Input Required", "Please enter a URL or select an image file.")
+        place_id = self.place_id_input.text().strip()
+
+        if not input_text and not place_id:
+            QMessageBox.warning(self, "Input Required", "Please enter a URL/image file or a Google Place ID.")
             return
+
+        # Google Review Processing (Place ID only)
+        if place_id:
+            from .google_review import is_valid_place_id, generate_review_url
+
+            if not is_valid_place_id(place_id):
+                QMessageBox.warning(
+                    self,
+                    "Invalid Place ID",
+                    f"Invalid Place ID: {place_id}\n\n"
+                    f"Place IDs must start with 'ChIJ' or 'EI'.\n\n"
+                    f"Click '❓ How to get Place ID' for instructions."
+                )
+                return
+
+            # Generate review URL and use it as input
+            review_url = generate_review_url(place_id)
+            input_text = review_url
+            self.status_label.setText(f"✅ Review link: {review_url[:50]}...")
 
         # Get output name
         output_name = self.name_field.text().strip()
@@ -979,6 +1070,18 @@ class SimpleMainWindow(QMainWindow):
 
         with open(json_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
+
+        # Check version compatibility
+        json_version = config.get('version', 'unknown')
+        if json_version != __version__:
+            warning_msg = (
+                f"Version Mismatch!\n\n"
+                f"JSON file version: {json_version}\n"
+                f"Current app version: {__version__}\n\n"
+                f"Loading settings may cause incompatibilities, but the developer "
+                f"tries their best to prevent inconsistencies. Proceed with caution."
+            )
+            QMessageBox.warning(self, "Version Compatibility Warning", warning_msg)
 
         # Load URL/Input
         if 'qr_input' in config:

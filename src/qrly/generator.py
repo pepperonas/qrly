@@ -16,6 +16,8 @@ import subprocess
 import qrcode
 import tempfile
 
+from . import __version__
+
 # Default output directory in user's home folder
 DEFAULT_OUTPUT_DIR = Path.home() / "qr-codes"
 
@@ -500,7 +502,7 @@ module qr_pattern() {{
 
         metadata = {
             "generated_at": datetime.now().isoformat(),
-            "version": "0.1.0",
+            "version": __version__,
             "mode": self.mode,
             "qr_input": qr_input or str(self.image_path.name),
             "dimensions": {
@@ -689,7 +691,7 @@ Examples:
         """
     )
 
-    parser.add_argument('input', type=str, help='QR code image file (PNG/JPG) or URL to encode')
+    parser.add_argument('input', type=str, nargs='?', help='QR code image file (PNG/JPG) or URL to encode (optional if --place-id is used)')
     parser.add_argument('--mode', type=str, choices=['square', 'pendant', 'rectangle-text', 'pendant-text', 'rectangle-text-2x'], default='square',
                         help='Model type: square (default), pendant (with hole), rectangle-text (with text bottom), pendant-text (pendant with text), rectangle-text-2x (text top AND bottom)')
     parser.add_argument('--text', '-t', type=str, default='',
@@ -703,11 +705,45 @@ Examples:
     parser.add_argument('--name', '-n', type=str, default=None,
                         help='Base name for output files (default: derived from input)')
 
+    # Google Review options
+    parser.add_argument('--place-id', type=str, default=None,
+                        help='Google Place ID (ChIJ...) for direct review link generation')
+
     args = parser.parse_args()
+
+    # Validate input or place_id is provided
+    if not args.input and not args.place_id:
+        parser.error("Either 'input' or '--place-id' must be provided")
 
     # Expand user path and create output directory if needed
     output_dir = Path(args.output).expanduser()
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Google Review Processing (Place ID only)
+    if args.place_id:
+        from .google_review import is_valid_place_id, generate_review_url
+
+        print(f"🗺️  Processing Google Place ID...")
+
+        if not is_valid_place_id(args.place_id):
+            print(f"❌ Invalid Place ID: {args.place_id}")
+            print()
+            print("How to get a valid Place ID:")
+            print("1. Visit: https://developers.google.com/maps/documentation/places/web-service/place-id")
+            print("2. Scroll to 'Place ID Finder' widget")
+            print("3. Search for your business")
+            print("4. Copy the Place ID (starts with ChIJ)")
+            print()
+            sys.exit(1)
+
+        # Generate review URL
+        review_url = generate_review_url(args.place_id)
+        args.input = review_url
+
+        print(f"✅ Google Review Link generated!")
+        print(f"   Place ID: {args.place_id}")
+        print(f"   Review:   {review_url}")
+        print()
 
     # Check if input is URL or file
     input_path = args.input

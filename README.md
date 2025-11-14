@@ -6,20 +6,28 @@ Automatically generate 3D-printable QR code models from URLs or PNG/JPG images -
 
 ![Generated 3D Models](docs/images/screenshot-3d-models.png)
 
-## Version 0.3.0 - Latest Updates
+## Version 0.3.3 - Latest Updates
 
 **New Features:**
-- **Synchronized Relief Heights**: QR code and text relief now always have the same height for consistent appearance
+- **Dynamic Text Scaling**: Text size automatically scales with model size (Small/Medium/Large) - 3mm/6mm/12mm for 0.5x/1x/2x scale
+- **Scaled Text Margins**: Text spacing adjusts dynamically (1mm/2mm/4mm) based on model size for perfect proportions
+- **Enhanced Drag & Drop**: Supports rectangle-text-2x mode and loads both top/bottom text from JSON metadata
+- **Synchronized Relief Heights**: QR code and text relief always have the same height for consistent appearance
 - **Dynamic Relief Label**: UI label updates based on model type ("QR Relief:" vs "QR/Text Relief:")
-- **Drag & Drop JSON Loading**: Drop any JSON metadata file onto the GUI to instantly load all settings
 - **Smart Output Naming**: Auto-generated folder names include size (small/medium/large) and thickness (thin/medium/thick) labels
-- **Optimized Layout**: Better spacing and proportions in GUI for improved usability
+- **Optimized macOS Build**: PyInstaller-based .app bundle with 85% smaller size (VTK/PyVista excluded)
+
+**Bug Fixes:**
+- Fixed text overflow on Small models (0.5x scale)
+- Fixed text being too small on Large models (2x scale)
+- Fixed missing rectangle-text-2x mode in drag & drop mapping
+- Fixed missing content_top loading from JSON files
 
 **Improvements:**
-- Better visual consistency across all model types
-- Faster workflow with JSON configuration loading
-- Instant identification of model specifications from folder names
-- More intuitive user interface
+- Text and margins now scale proportionally with model size
+- Better visual balance across all size presets
+- More reliable JSON metadata loading
+- Faster workflow with optimized build size
 
 ## Features
 
@@ -44,6 +52,51 @@ Automatically generate 3D-printable QR code models from URLs or PNG/JPG images -
 - **Automatic STL Generation**: Print-ready output
 - **JSON Metadata Export**: Each model gets a JSON file with complete configuration
 - **Organized Output**: Each model in its own subfolder with all files (PNG, SCAD, STL, JSON)
+- **🗺️ Google Review QR Codes**: Generate direct review links from Google Place IDs
+
+### 🗺️ Google Review QR Codes (NEW in v0.4.0)
+
+Generate QR codes that link **directly** to your Google Business review page! Perfect for restaurants, shops, and businesses.
+
+**How it works:**
+1. Get your Google Place ID (see guide below)
+2. Enter it in Qrly (GUI or CLI)
+3. Get a QR code with direct review link!
+
+**✅ Simple & Reliable:**
+- Only requires a Place ID (ChIJ...)
+- No complex URL parsing
+- Always generates correct review links
+- Works in GUI, CLI, and batch processing
+
+**How to get a Google Place ID:**
+
+**Method 1: Official Google Place ID Finder** (Recommended)
+1. Visit: https://developers.google.com/maps/documentation/places/web-service/place-id
+2. Scroll down to the **"Place ID Finder"** widget
+3. Search for your business (e.g., "celox.io Berlin")
+4. Select your business from suggestions
+5. Copy the Place ID (starts with `ChIJ`)
+
+**Method 2: Browser Inspector**
+1. Open Google Search: "Your Business Name + City"
+2. Right-click on "Write a review" button (Knowledge Panel)
+3. Select "Inspect" / "Element untersuchen"
+4. In Developer Tools: Ctrl+F → Search for `data-pid`
+5. Copy the value (e.g., `data-pid="ChIJ..."`)
+
+**Method 3: Google My Business Dashboard**
+1. Login: https://business.google.com/
+2. Select your business
+3. Navigate to: Info → Advanced Information → Place ID
+4. Copy the Place ID
+
+**Example Place ID:**
+```
+ChIJp4JiUCNP0xQR1JaSjpW_Hms
+```
+
+📖 **Detailed guide:** See `CELOX_IO_ANLEITUNG.md` for complete step-by-step instructions
 
 ### 🌟 Intelligent Text Scaling
 
@@ -128,31 +181,36 @@ qrly https://your-website.com --mode pendant --name my-site
 
 **Operation:**
 1. **Input**: Enter URL (e.g., `https://example.com`) or select PNG/JPG file
-2. **Output Name**: Optional - automatically derived from URL
-3. **Model Type**: Choose from 4 modes:
+2. **🗺️ Google Review** (Optional):
+   - Enable "Generate Google Review Link" checkbox
+   - Paste Google Maps URL or Place ID
+   - App automatically extracts Place ID and generates review link
+   - Business name auto-fills as text label
+3. **Output Name**: Optional - automatically derived from URL
+4. **Model Type**: Choose from 4 modes:
    - Square (55x55mm) - Classic square
    - Pendant (with hole) - With keychain hole
    - Rectangle + Text (54x64mm) - Rectangle with text field
    - Pendant + Text (55x65mm) - Pendant with text field
-4. **Size**: Select preset button:
+5. **Size**: Select preset button:
    - Small (0.5x) - Half size, saves material
    - Medium (1x) - Standard size (recommended)
    - Large (2x) - Double size, better scannability
-5. **Text**: For text modes: Enter text (max 20 characters)
-6. **Text Rotation** (Rectangle+Text only): Optional "Rotate text 180°" checkbox for upside-down text
+6. **Text**: For text modes: Enter text (max 20 characters)
+7. **Text Rotation** (Rectangle+Text only): Optional "Rotate text 180°" checkbox for upside-down text
    - Pendant+Text automatically rotates text 180°
-7. **Adjust parameters**:
+8. **Adjust parameters**:
    - Card Height: 0.5-5mm (default: 1.25mm)
    - QR Margin: 0-10mm (default: 0.5mm)
    - QR Relief: 0.1-2mm (default: 1mm)
    - Corner Radius: 0-5mm (default: 2mm)
-8. **Thickness Presets**: Quick selection:
+9. **Thickness Presets**: Quick selection:
    - Thin (0.5mm) - Faster printing, less material
    - Medium (1.0mm) - Balanced
    - Thick (1.5mm) - More stable, better readability
-9. **Click "Generate 3D Model"**
-10. Wait (~1 second with OpenSCAD 2025+)
-11. ✅ Success! Files in `generated/model-name/` folder
+10. **Click "Generate 3D Model"**
+11. Wait (~1 second with OpenSCAD 2025+)
+12. ✅ Success! Files in `generated/model-name/` folder
 
 ### Output Organization
 
@@ -216,7 +274,8 @@ For generating multiple models at once, batch functionality is available:
     "card_height": 1.25,
     "qr_margin": 2.0,
     "qr_relief": 1.0,
-    "corner_radius": 2
+    "corner_radius": 2,
+    "google_review": false
   },
   "models": [
     {
@@ -242,6 +301,19 @@ For generating multiple models at once, batch functionality is available:
       "mode": "pendant-text",
       "text": "WIKI",
       "card_height": 1.5
+    },
+    {
+      "name": "restaurant-review",
+      "url": "https://www.google.com/maps/place/My+Restaurant/@52.5163,13.3777,17z",
+      "mode": "rectangle-text",
+      "google_review": true
+    },
+    {
+      "name": "shop-pendant",
+      "place_id": "ChIJp4JiUCNP0xQR1JaSjpW_Hms",
+      "mode": "pendant-text",
+      "google_review": true,
+      "text": "RATE US!"
     }
   ]
 }
@@ -250,12 +322,18 @@ For generating multiple models at once, batch functionality is available:
 **Important Notes:**
 - **global_params**: Default parameters for all models
 - **models**: Array with individual model configurations
-- Required fields per model: `name`, `url`, `mode`
+- Required fields per model: `name`, (`url` OR `place_id`), `mode`
 - Optional: `text`, `text_rotation` (for text modes)
+- Optional: `google_review` (enables Google Maps review link generation)
 - Optional: Individual parameters (override global_params)
 - Status label updates automatically every 5 seconds
 - Progress shown in real-time (X/Y models)
 - Failed models are skipped, not aborted
+
+**Google Review Options:**
+- Set `google_review: true` globally or per model
+- Use `url` with Google Maps URL OR `place_id` with Place ID
+- Business name is automatically extracted and used as text (if not specified)
 
 ### Command Line
 
@@ -291,6 +369,34 @@ For generating multiple models at once, batch functionality is available:
 ./venv-gui/bin/python -m qrly https://example.com --mode rectangle-text --text "ROTATED" --text-rotation 180 --name mycard-rot
 ```
 
+#### 🗺️ Google Review QR Codes:
+
+**From Place ID:**
+```bash
+./venv-gui/bin/python -m qrly \
+    --place-id "ChIJp4JiUCNP0xQR1JaSjpW_Hms" \
+    --mode rectangle-text \
+    --text "REVIEW US!" \
+    --name my-business-review
+```
+
+**Square mode:**
+```bash
+./venv-gui/bin/python -m qrly \
+    --place-id "ChIJp4JiUCNP0xQR1JaSjpW_Hms" \
+    --mode square \
+    --name restaurant-review
+```
+
+**Pendant mode with text:**
+```bash
+./venv-gui/bin/python -m qrly \
+    --place-id "ChIJp4JiUCNP0xQR1JaSjpW_Hms" \
+    --mode pendant-text \
+    --text "RATE US" \
+    --name keychain-review
+```
+
 #### From Image File:
 
 **Square:**
@@ -312,12 +418,14 @@ For generating multiple models at once, batch functionality is available:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `input` | QR code image file (PNG/JPG) or URL | *required* |
+| `input` | QR code image file (PNG/JPG) or URL (optional if --place-id used) | *required* |
 | `--mode` | Mode: `square`, `pendant`, `rectangle-text`, `pendant-text` | `square` |
 | `--text`, `-t` | Text below QR code (max 20 characters, only for *-text modes) | *(empty)* |
 | `--text-rotation` | Rotate text 180° (0 or 180, auto for pendant-text) | `0` |
 | `--output`, `-o` | Output directory | `generated` |
 | `--name`, `-n` | Base name for output files | *derived from input* |
+| `--google-review` | Generate Google Review link from Maps URL or Place ID | `false` |
+| `--place-id` | Google Place ID (alternative to URL, implies --google-review) | *(none)* |
 
 ## Modes in Detail
 

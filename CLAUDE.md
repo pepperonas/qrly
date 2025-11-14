@@ -6,22 +6,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **QR Code 3D Model Generator** - Desktop application and CLI tool for generating 3D-printable QR code models from URLs or images. Designed for credit card-sized (55x55mm) physical QR codes optimized for 3D printing.
 
-**Current Version:** 0.3.0
+**Current Version:** 0.3.3
 
-## Recent Updates (v0.3.0)
+## Recent Updates (v0.3.3)
 
 **New Features:**
-1. **Synchronized Relief Heights** - QR and text relief always have same height (`generator.text_height = generator.qr_relief`)
-2. **Dynamic Relief Label** - UI label updates based on mode: "QR Relief:" vs "QR/Text Relief:" (app.py:592-596)
-3. **Drag & Drop JSON Loading** - Drop JSON metadata files onto GUI to load all settings (app.py:924-1002)
-4. **Smart Output Naming** - Auto-generated names include size/thickness: `{name}-{size}-{thickness}` (generator.py:492-495)
-5. **Optimized Layout** - Better GUI spacing and proportions (app.py:218, 245-246, etc.)
+1. **Dynamic Text Scaling** - Text size scales with model size: `max_text_size = 6.0 * size_scale` (generator.py:212)
+   - Small (0.5x): 3mm text
+   - Medium (1.0x): 6mm text
+   - Large (2.0x): 12mm text
+2. **Scaled Text Margins** - Text spacing adjusts dynamically: `scaled_text_margin = text_margin * size_scale` (generator.py:221)
+   - Small (0.5x): 1mm margin
+   - Medium (1.0x): 2mm margin
+   - Large (2.0x): 4mm margin
+3. **Scaled Safety Buffer** - Safety buffer scales with model: `safety_buffer = 4 * size_scale` (generator.py:229)
+4. **Enhanced Drag & Drop** - Supports rectangle-text-2x mode and loads both top/bottom text from JSON
+5. **PyInstaller Build** - Switched from py2app to PyInstaller for macOS .app bundles
+6. **Optimized Build Size** - Excluded VTK/PyVista from build (85% size reduction)
+
+**Bug Fixes:**
+- Fixed text overflow on Small models (0.5x scale)
+- Fixed text being too small on Large models (2x scale)
+- Fixed missing rectangle-text-2x in mode mapping
+- Fixed missing content_top loading from JSON metadata
 
 **Key Improvements:**
-- Relief label stored as reference for dynamic updates (`self.relief_label`)
-- Size labels: small (0.5x), medium (1.0x), large (2.0x)
-- Thickness labels: thin (≤0.6mm), medium (0.7-1.3mm), thick (≥1.4mm)
-- Both single and batch generation sync text height with QR relief
+- Text and margins scale proportionally with model size for perfect visual balance
+- JSON metadata stores scaled values for accurate reproduction
+- Faster, smaller macOS .app bundle via PyInstaller
+- More reliable drag & drop functionality
 
 ## Technology Stack
 
@@ -270,7 +283,7 @@ module text_label() {
 --text-rotation {0,180}  # Default: 0, ignored for pendant-text (always 180)
 ```
 
-**Dynamic Text Sizing Feature (Added 2025-01-10):**
+**Dynamic Text Sizing Feature (Added 2025-01-10, Enhanced in v0.3.3):**
 
 **Problem:** Fixed 6mm text size caused overflow with longer text strings. Example: "berlinometer" (12 characters) extended beyond the model boundaries.
 
@@ -278,6 +291,14 @@ module text_label() {
 - Text length (character count)
 - Available width (card width minus margins and safety buffer)
 - Character width factor for Liberation Mono Bold font
+
+**v0.3.3 Enhancement:** Text size now scales with model size (size_scale):
+- Small (0.5x): Text scales to 3mm max
+- Medium (1.0x): Text scales to 6mm max (original behavior)
+- Large (2.0x): Text scales to 12mm max
+- Formula: `max_text_size = 6.0 * size_scale` (generator.py:212)
+- Text margins also scale: `scaled_text_margin = text_margin * size_scale` (generator.py:221)
+- Safety buffer scales: `safety_buffer = 4 * size_scale` (generator.py:229)
 
 **Implementation Details:**
 
@@ -542,6 +563,25 @@ ls -lh generated/
 openscad -o test.stl generated/example-model.scad
 ```
 
+### Build macOS .app (PyInstaller)
+```bash
+# Install PyInstaller (if not already installed)
+./venv-gui/bin/pip install pyinstaller
+
+# Build .app bundle
+./venv-gui/bin/pyinstaller qrly.spec
+
+# Output: dist/Qrly.app
+# App bundle is ready to use or distribute
+```
+
+**Note:** PyInstaller spec (qrly.spec) excludes VTK/PyVista for 85% size reduction. The .app is self-contained and includes all dependencies.
+
+### Run Tests
+```bash
+./venv-gui/bin/pytest tests/ -v
+```
+
 ## Code Style & Conventions
 
 - **PEP 8** compliance
@@ -636,14 +676,16 @@ For development questions:
 
 ---
 
-**Last Updated:** 2025-11-11 (v0.1.0: Project reorganization to src-layout)
+**Last Updated:** 2025-11-14 (v0.3.3: Dynamic text scaling and improvements)
 **Python Version:** 3.13
-**Package Version:** 0.1.0
-**Package Name:** qrly (was: qrly)
+**Package Version:** 0.3.3
+**Package Name:** qrly
 **Primary GUI:** src/qrly/app.py (entry point: `qrly` or `python -m qrly.app`)
 **Primary CLI:** src/qrly/generator.py (entry point: `qrly` or `python -m qrly`)
-**Status:** Production-ready, GUI functional without 3D viewer, src-layout structure
+**Status:** Production-ready, GUI functional without 3D viewer, src-layout structure, PyInstaller build
 **Latest Features:**
+- **v0.3.3**: Dynamic text scaling with model size, scaled margins, PyInstaller build (85% smaller)
+- **v0.3.0**: Synchronized relief heights, drag & drop JSON loading, smart output naming
 - **v0.1.0**: Reorganized to Python src-layout standard (src/qrly/, tests/, scripts/)
 - Batch processing: Generate multiple models from JSON configuration
 - Text rotation (0° or 180°) for text modes - Rectangle-text: user choice, Pendant-text: automatic
