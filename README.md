@@ -2,7 +2,11 @@
 
 Automatically generate 3D-printable QR code models from URLs or PNG/JPG images - with desktop GUI or command line.
 
-![qrly GUI](docs/images/screenshot-v0.0.1.png)
+![qrly GUI](docs/images/screenshot-app.png)
+
+![3D Model Preview](docs/images/screenshot-preview.png)
+
+![Help Dialog](docs/images/screenshot-about.png)
 
 ![Generated 3D Models](docs/images/screenshot-3d-models.png)
 
