@@ -10,28 +10,38 @@ Automatically generate 3D-printable QR code models from URLs or PNG/JPG images -
 
 ![Generated 3D Models](docs/images/screenshot-3d-models.png)
 
-## Version 0.3.3 - Latest Updates
+## Version 0.5.0 - Latest Updates (2025-11-15)
 
 **New Features:**
-- **Dynamic Text Scaling**: Text size automatically scales with model size (Small/Medium/Large) - 3mm/6mm/12mm for 0.5x/1x/2x scale
-- **Scaled Text Margins**: Text spacing adjusts dynamically (1mm/2mm/4mm) based on model size for perfect proportions
-- **Enhanced Drag & Drop**: Supports rectangle-text-2x mode and loads both top/bottom text from JSON metadata
-- **Synchronized Relief Heights**: QR code and text relief always have the same height for consistent appearance
-- **Dynamic Relief Label**: UI label updates based on model type ("QR Relief:" vs "QR/Text Relief:")
-- **Smart Output Naming**: Auto-generated folder names include size (small/medium/large) and thickness (thin/medium/thick) labels
-- **Optimized macOS Build**: PyInstaller-based .app bundle with 85% smaller size (VTK/PyVista excluded)
+- **🎨 3D Model Preview**: OpenSCAD-rendered preview dialog before generation
+  - Click "Preview 3D Model" to see accurate 3D visualization
+  - White base card with black QR code and text on dark background
+  - Auto-centered camera view with optimal perspective
+  - Renders in ~1-2 seconds with OpenSCAD 2025+
+- **ℹ️ Improved Help Dialog**: Redesigned info dialog (❓ button)
+  - Wider layout (700x500px) with better content organization
+  - Footer with MIT license and project information
+  - Clickable GitHub repository link
 
-**Bug Fixes:**
-- Fixed text overflow on Small models (0.5x scale)
-- Fixed text being too small on Large models (2x scale)
-- Fixed missing rectangle-text-2x mode in drag & drop mapping
-- Fixed missing content_top loading from JSON files
+**Changes:**
+- **Removed Batch Processing**: Simplified codebase by removing batch functionality
+  - Users can generate multiple models by running the app multiple times
+  - ~120 lines of code removed for better maintainability
 
-**Improvements:**
-- Text and margins now scale proportionally with model size
-- Better visual balance across all size presets
-- More reliable JSON metadata loading
-- Faster workflow with optimized build size
+## Previous Updates
+
+**Version 0.4.4 (2025-11-14):**
+- **Thin Model Optimization**: QR relief automatically set to 0.7mm for thin models (≤ 0.6mm height)
+
+**Version 0.4.0 (2025-11-14):**
+- **🗺️ Google Review QR Codes**: Generate direct review links from Google Place IDs
+- Simplified Place ID workflow (no complex URL parsing)
+
+**Version 0.3.3 (2025-11-13):**
+- **Dynamic Text Scaling**: Text size scales with model size (3mm/6mm/12mm for Small/Medium/Large)
+- **Scaled Text Margins**: Margins adjust dynamically (1mm/2mm/4mm)
+- **Enhanced Drag & Drop**: Supports rectangle-text-2x mode
+- **Optimized macOS Build**: PyInstaller-based .app bundle (85% smaller size)
 
 ## Features
 
